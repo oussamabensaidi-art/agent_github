@@ -1,0 +1,43 @@
+# Banc e2e (DEV UNIQUEMENT). Remplace GitHub par un faux GitHub et le SMTP par
+# Mailpit : rien ne part vers GitHub ni vers une vraie boîte mail.
+#   python e2e/run_e2e.py            (lance tout, voir e2e/README.md)
+services:
+  api:
+    environment:
+      GITHUB_WEBHOOK_SECRET: e2e-webhook-secret
+
+  worker:
+    environment:
+      GITHUB_AUTH_MODE: app
+      GITHUB_APP_ID: "12345"
+      GITHUB_API_URL: http://fake-github:9000
+      DRY_RUN: "false"
+      LLM_MODEL: ${E2E_MODEL:-qwen2.5-coder:0.5b}
+      LLM_TIMEOUT_SECONDS: "900"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_STARTTLS: "false"
+      SMTP_USER: ""
+      ALERT_EMAILS: lead-dev@calipso.test
+      AUDIT_LOG_PATH: /data/audit-e2e.jsonl
+    depends_on: [fake-github, mailpit]
+
+  fake-github:
+    build: .
+    command: ["uvicorn", "e2e.fake_github:app", "--host", "0.0.0.0", "--port", "9000"]
+    environment:
+      FAKE_GITHUB_APP_ID: "12345"
+      FAKE_GITHUB_PUBLIC_KEY: /keys/app.pub.pem
+    volumes:
+      - ./e2e/.keys:/keys:ro
+    ports:
+      - "9000:9000"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+
+secrets:
+  github_app.pem:
+    file: ./e2e/.keys/app.pem

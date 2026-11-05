@@ -32,6 +32,15 @@ def test_secret_findings_bypass_severity_threshold():
     assert len(out) == 1
 
 
+def test_llm_duplicate_of_secret_finding_is_dropped():
+    out = validate_findings([
+        F(line=11, severity="critical", title="Clé AWS", source="secret-scan"),
+        F(line=11, severity="critical", title="Utilisation de secret masqué"),
+        F(line=12, title="Autre problème"),
+    ], COMMENTABLE, "minor")
+    assert [(f.line, f.source) for f in out] == [(11, "secret-scan"), (12, "llm")]
+
+
 def test_verdict():
     assert compute_verdict([F(severity="critical")], []) == VERDICT_BLOCKING
     assert compute_verdict([F(severity="major")], []) == VERDICT_CHECK

@@ -67,10 +67,15 @@ def validate_findings(
     """
     out: list[Finding] = []
     seen: set[tuple] = set()
+    # Lignes déjà signalées par le scanner de secrets : le modèle y voit
+    # "[SECRET MASQUÉ]" et la recommente malgré la consigne (constaté avec le 7b).
+    secret_lines = {(f.path, f.line) for f in findings if f.source == "secret-scan"}
     for f in findings:
         if f.severity not in SEVERITIES or not f.title:
             continue
         if f.source == "llm" and rank(f.severity) < rank(min_severity):
+            continue
+        if f.source == "llm" and (f.path, f.line) in secret_lines:
             continue
         if f.path not in commentable:
             continue

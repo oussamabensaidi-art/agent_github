@@ -109,6 +109,31 @@ py -3 -m venv .venv
 
 Les règles d'équipe injectées dans le prompt sont dans `rules/default.md`.
 
+### Banc de test de bout en bout (e2e)
+
+Vraie API, vrai worker, vrai Redis, vrai Ollama ; **faux GitHub** (`e2e/fake_github.py`)
+et **Mailpit** à la place du SMTP : rien ne part vers GitHub ni vers une vraie boîte.
+
+```bash
+.venv/Scripts/python e2e/run_e2e.py                                         # modèle 0.5b
+E2E_MODEL=qwen2.5-coder:7b .venv/Scripts/python e2e/run_e2e.py --only 101 102  # modèle cible
+```
+
+Le faux GitHub applique les contrôles du vrai (JWT de l'App, jeton obligatoire,
+422 sur une ligne hors diff) et signale toute action interdite au bot (fusion,
+écriture de code, APPROVE). Les mails reçus sont visibles sur http://localhost:8025.
+
+| PR de test | Vérifié (indépendant du modèle) |
+|---|---|
+| #101 contrôleur avec clé AWS en dur, injection SQL, `dump()` | check `failure`, email envoyé, commentaire inline ligne 12, **le secret n'apparaît nulle part** (appels GitHub, email, audit, logs) |
+| #102 service propre + test | revue publiée ; mail ⇔ check `failure` |
+| #103 fichier de 2000 lignes + service | fichier signalé « trop volumineux », jamais `success` |
+| #104 webhook sur un ancien commit | job obsolète : rien publié, audit `stale` |
+| relivraison du webhook #101 | refusée (`duplicate`) |
+
+La pertinence des remarques du modèle sur #101 est **rapportée** (référence :
+injection SQL L20, `dump()` L21, contrôle d'accès L17), pas assertée.
+
 ## Limites connues du prototype (à traiter dans les phases suivantes)
 
 - Une nouvelle revue est publiée à chaque nouveau commit analysé ; pas encore

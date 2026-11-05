@@ -5,3 +5,4 @@ __pycache__/
 data/
 secrets/
 *.pem
+e2e/.keys/
