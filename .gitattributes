@@ -1,0 +1,3 @@
+# Fichiers exécutés dans des conteneurs Linux : toujours LF.
+* text=auto eol=lf
+*.pem binary

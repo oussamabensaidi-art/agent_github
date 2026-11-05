@@ -1,0 +1,52 @@
+# Agent IA de revue des PR — déploiement sur l'infrastructure interne.
+#  - api    : reçoit les webhooks GitHub, vérifie la signature, met en file.
+#  - worker : dépile et exécute le graphe LangGraph (une analyse à la fois ;
+#             scaler avec `docker compose up --scale worker=N`).
+#  - redis  : file d'attente + déduplication.
+#  - ollama : modèle local (GPU : ajouter docker-compose.gpu.yml).
+services:
+  api:
+    build: .
+    env_file: .env
+    ports:
+      - "8020:8020"
+    depends_on: [redis]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8020/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build: .
+    command: ["python", "-m", "worker"]
+    env_file: .env
+    depends_on: [redis, ollama]
+    volumes:
+      - audit:/data
+    secrets:
+      - github_app.pem
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis:/data
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama:/root/.ollama
+    restart: unless-stopped
+
+secrets:
+  github_app.pem:
+    file: ./secrets/github_app.pem
+
+volumes:
+  audit:
+  redis:
+  ollama:

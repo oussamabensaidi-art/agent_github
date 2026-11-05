@@ -1,0 +1,7 @@
+# DEV LOCAL uniquement (fusionné automatiquement par `docker compose up`).
+# Expose Ollama sur l'hôte pour lancer cli.py depuis le venv.
+# NE PAS DÉPLOYER : en prod, seul docker-compose.yml (+ gpu) fait foi.
+services:
+  ollama:
+    ports:
+      - "11434:11434"
