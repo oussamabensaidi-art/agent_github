@@ -104,6 +104,26 @@ class GitHubClient:
                 return files
             page += 1
 
+    async def download_tarball(self, repo: str, sha: str, max_bytes: int) -> bytes:
+        """Archive tar.gz du dépôt au commit donné (redirection vers codeload.github.com)."""
+        async with self._http.stream("GET", f"/repos/{repo}/tarball/{sha}", follow_redirects=True) as resp:
+            if resp.status_code == 401 and self._refresh is not None:
+                self._http.headers["Authorization"] = f"Bearer {await self._refresh()}"
+                self._refresh = None
+                return await self.download_tarball(repo, sha, max_bytes)
+            resp.raise_for_status()
+            data = bytearray()
+            async for chunk in resp.aiter_bytes():
+                data += chunk
+                if len(data) > max_bytes:
+                    raise ValueError(f"archive du dépôt > {max_bytes // (1024 * 1024)} Mo")
+        return bytes(data)
+
+    async def list_check_runs(self, repo: str, sha: str) -> list[dict]:
+        data = (await self._req("GET", f"/repos/{repo}/commits/{sha}/check-runs",
+                                params={"per_page": 100, "filter": "latest"})).json()
+        return data.get("check_runs", [])
+
     # ---- statut : check run (App) ou statut de commit (PAT) ----
     # Correspondance verdict → GitHub : agent.review.CHECK_CONCLUSION / STATUS_STATE.
 

@@ -18,6 +18,8 @@ GitHub ──webhook──▶ api (FastAPI :8020) ──▶ Redis (file + dédup
                                                                       ├─▶ Postgres : runs, events, findings, avis, réglages
    navigateur ◀── SSE ── api /ui ◀── Redis Stream + Postgres          ├─▶ GitHub API (lecture PR, revue, check)
                                                                       ├─▶ modèle (Ollama | API LLM Calipso)
+                                                                      ├─▶ checker (conteneur isolé : gitleaks,
+                                                                      │    composer audit, PHPStan, PHP-CS-Fixer)
                                                                       ├─▶ SMTP (alerte PR bloquante)
                                                                       └─▶ /data/audit.jsonl
 ```
@@ -30,6 +32,7 @@ Graphe (`agent/graph.py`) — chaque nœud émet `node_started` / `node_finished
 | `load_diff` | Récupère les fichiers ; exclut lock files, générés, `vendor/`, supprimés, binaires ; applique les limites de taille. **Un fichier modifié dont GitHub n'a pas fourni le patch est « incomplet », jamais « exclu ».** |
 | `scan_secrets` | Détecte les secrets dans les lignes ajoutées **et dans le titre / la description de la PR** (remarque critique déterministe) et les **masque avant** tout envoi au modèle. |
 | `ai_review` | Découpe le diff en lots, analysés **en parallèle** (`LLM_CONCURRENCY`). Un lot raté n'arrête pas la revue. Chaque remarque est émise dès que son lot répond. |
+| `static_checks` | **En parallèle de `ai_review`.** Envoie l'archive du commit au conteneur `checker` (gitleaks, composer audit, PHPStan, PHP-CS-Fixer) et lit le résultat de la **CI du dépôt** (check runs GitHub : PHPUnit n'est jamais exécuté par l'agent). Seules les lignes **ajoutées** par la PR sont imputées. Une panne → analyse incomplète, jamais d'erreur. |
 | `decide` | Écarte les remarques inventées (fichier hors diff), sous le seuil de gravité, ou en double ; calcule le verdict. |
 | `publish` | **Relit la PR** : si un commit plus récent est arrivé, rien n'est publié et le check est clos « remplacé ». Sinon revue GitHub avec commentaires en ligne + check run (ou statut de commit). |
 | `alert` | Email si la PR est bloquante. |
@@ -38,14 +41,38 @@ Graphe (`agent/graph.py`) — chaque nœud émet `node_started` / `node_finished
 Toute écriture vers l'extérieur (check, revue, statut, email) relit d'abord
 l'**interrupteur de publication**.
 
-### Verdict v2 (`agent/review.py`, version `verdict-v2`)
+### Contrôles statiques et CI (`checker/`, `agent/checks.py`)
+
+| Source | Gravité | Effet en mode pilote |
+|---|---|---|
+| gitleaks (secret sur une ligne ajoutée) | critique | **bloquante** |
+| composer audit (si `composer.json` / `composer.lock` changent), une remarque par paquet | gravité max des avis (high/critical → critique) | **bloquante** si critique |
+| CI du dépôt en échec (`failure`, `timed_out`) | critique | **bloquante** |
+| PHPStan (niveau `PHPSTAN_LEVEL`, erreurs sur lignes ajoutées) | majeure | à vérifier |
+| PHP-CS-Fixer (`@Symfony`, lignes ajoutées) | mineure | aucun |
+| outil en erreur / délai dépassé, CI non terminée (`CI_WAIT_SECONDS`), CI annulée | — | **analyse incomplète** |
+
+Isolement du conteneur `checker` : aucun secret ; réseau `checks` interne partagé
+avec le worker seulement (ni base, ni Redis, ni API joignables) + sortie Internet
+pour Composer ; utilisateur non root, système de fichiers en lecture seule,
+`cap_drop: ALL`, `no-new-privileges`, limites CPU / mémoire / processus ; dossier
+de travail jetable par PR. Le code de la PR n'est pas exécuté volontairement :
+`composer install --no-scripts --no-plugins` sans `autoload.files`, configurations
+PHPStan / PHP-CS-Fixer de l'agent (jamais celles du dépôt), archive extraite sans
+liens ni chemins sortants.
+
+Réglages : `CHECKS_ENABLED`, `CHECKER_URL`, `PHPSTAN_LEVEL`, `CI_ENABLED`,
+`CI_WAIT_SECONDS`, `CI_GRACE_SECONDS`, `CI_REQUIRED` (pas de CI = incomplet),
+`CI_CHECK_NAMES` (liste blanche des checks de CI).
+
+### Verdict (`agent/review.py`, version `verdict-v3`)
 
 Ordre d'évaluation, par règles fixes :
 
 | Verdict | Condition | Check run (App) | Statut de commit (jeton) |
 |---|---|---|---|
-| 🔴 **Bloquante** | remarque `critical` d'une source **déterministe** (secret). Hors mode pilote, une critique de l'IA aussi. | `failure` | `failure` |
-| ⚪ **Analyse incomplète** | une partie n'a pas été relue : fichier trop gros, patch non fourni par GitHub, limite de taille, lot en échec | `action_required` | `error` |
+| 🔴 **Bloquante** | remarque `critical` d'une source **déterministe** (secret, gitleaks, dépendance vulnérable grave, CI en échec). Hors mode pilote, une critique de l'IA aussi. | `failure` | `failure` |
+| ⚪ **Analyse incomplète** | une partie n'a pas été relue : fichier trop gros, patch non fourni par GitHub, limite de taille, lot en échec, outil de contrôle en erreur, CI non terminée | `action_required` | `error` |
 | 🟠 **À vérifier** | remarque `major`, ou critique de l'IA en mode pilote | `neutral` | `failure` |
 | 🟢 **Contrôles satisfaits** | sinon | `success` | `success` |
 | échec de l'agent | l'analyse n'a pas abouti | `action_required` | `error` |
@@ -56,7 +83,7 @@ Ordre d'évaluation, par règles fixes :
 - **Seul « Contrôles satisfaits » est vert.** Ce qui n'a pas été relu n'est jamais
   présenté comme réussi, en mode App comme en mode jeton (qui n'a pas d'état neutre).
 - **Version des règles** publiée avec chaque verdict (résumé, check, audit, journal) :
-  `verdict-v2+regles-<empreinte de rules/default.md>`.
+  `verdict-v3+regles-<empreinte de rules/default.md>`.
 - Les checks et statuts pointent vers la page de l'analyse (`UI_PUBLIC_URL`).
 
 Pour que « bloquante » empêche réellement la fusion, ajoutez le check
@@ -206,8 +233,10 @@ injection SQL L20, `dump()` L21, contrôle d'accès L17), pas assertée.
 
 - Une nouvelle revue est publiée à chaque nouveau commit analysé ; pas encore
   de suppression des remarques déjà faites sur un commit précédent.
-- Le scanner de secrets intégré est un garde-fou minimal ; gitleaks arrive avec
-  les contrôles statiques.
+- La CI est lue par sondage (`CI_POLL_SECONDS`) : une CI plus longue que
+  `CI_WAIT_SECONDS` rend l'analyse incomplète.
+- PHPStan n'analyse que les fichiers PHP modifiés (avec l'autoload du projet) ;
+  sans l'extension Symfony / Doctrine, certaines erreurs de types restent invisibles.
 - File simple (`LPUSH`/`BRPOP`) : si un worker meurt pendant une analyse, ce
   job est perdu (pas de DLQ). Passer à une file fiable (`BLMOVE` vers une liste
   « en cours » + reprise) avant la production.
@@ -219,7 +248,8 @@ injection SQL L20, `dump()` L21, contrôle d'accès L17), pas assertée.
   centaines de millisecondes entre la relecture de la PR et l'envoi de la revue.
 - Les remarques arrivent lot par lot (le modèle renvoie un JSON complet par lot),
   pas mot à mot.
-- Le scanner ne couvre pas encore les fichiers exclus ou trop gros (gitleaks, à venir).
+- gitleaks ne signale que les lignes ajoutées connues ; dans un fichier dont
+  GitHub ne fournit pas le diff, tout secret trouvé est signalé.
 - Interface : servir en HTTPS et passer `UI_COOKIE_SECURE=true` hors poste local.
 
 ## Feuille de route
@@ -227,6 +257,6 @@ injection SQL L20, `dump()` L21, contrôle d'accès L17), pas assertée.
 | Semaines | Lot | État |
 |---|---|---|
 | 1-2 | Prototype : webhook, diff, revue IA, commentaire, verdict, alerte, audit | ✅ ce dépôt |
-| 3-4 | Contrôles statiques : PHPStan, PHP-CS-Fixer, PHPUnit, composer audit, gitleaks, dans un conteneur isolé par PR (nœud `static_checks`) | à faire |
+| 3-4 | Contrôles statiques : PHPStan, PHP-CS-Fixer, composer audit, gitleaks dans un conteneur isolé ; PHPUnit lu sur la CI du dépôt (nœud `static_checks`, en parallèle de la revue IA) | ✅ |
 | 5-6 | Contexte : code lié, règles par dépôt (`.github/pr-review.md`), calibrage du verdict | à faire |
 | 7-8 | Pilote sur un dépôt réel ; mesure de la pertinence (≥ 70 %), du délai (< 10 min) et du temps de revue | à faire |

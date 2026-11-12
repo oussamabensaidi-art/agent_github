@@ -13,3 +13,4 @@ docs/
 .pytest_cache/
 ui/frontend/node_modules/
 ui/dist/
+bench_real/.work/

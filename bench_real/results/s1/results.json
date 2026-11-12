@@ -1,0 +1,415 @@
+{
+  "tag": "s1",
+  "generated_at": "2026-11-12T12:13:47.501333+00:00",
+  "launch_spread_s": 4.4,
+  "results": [
+    {
+      "id": "S1-phpstan-methode",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 12,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "méthode inexistante (PHPStan)",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 44,
+          "title": "Route non protégée par vérification d'autorisation",
+          "source": "llm"
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 48,
+          "title": "PHPStan : Call to an undefined method App\\Service\\PremiumCalculator::annualTotalCents().",
+          "source": "phpstan"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 44,
+          "title": "Route non protégée par vérification d'autorisation"
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/d014e61abecc4148a077530aa032c4f0"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 79515,
+      "run_ms": 27047,
+      "total_ms": 106562,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/12",
+      "sha": "a16d77a"
+    },
+    {
+      "id": "S2-ci-en-echec",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 9,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "tests en échec dans la CI",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/6ce61ae6c60d4556955198336cc7d71a"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": true,
+      "mail_ok": true,
+      "queue_ms": 578,
+      "run_ms": 52826,
+      "total_ms": 53404,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/9",
+      "sha": "5b1578b"
+    },
+    {
+      "id": "S3-dependance-vulnerable",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 9,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "dépendance vulnérable (composer audit)",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-69246)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "critical",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2022-31091)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "critical",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2022-31090)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "critical",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2022-31043)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "critical",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2022-31042)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "critical",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2022-29248)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-69245)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67354)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67355)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67353)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-59883)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67339)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-55767)",
+          "source": "composer-audit"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-55568)",
+          "source": "composer-audit"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-69245)"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67354)"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67355)"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67353)"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-59883)"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-67339)"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-55767)"
+        },
+        {
+          "severity": "major",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (CVE-2026-55568)"
+        }
+      ],
+      "noise_major": 8,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 14 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/da883f972e7c4267b9eabceb2098201a"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": true,
+      "mail_ok": true,
+      "queue_ms": 53191,
+      "run_ms": 44441,
+      "total_ms": 97632,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/9",
+      "sha": "ff7a2ed"
+    },
+    {
+      "id": "S4-style",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 11,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [
+        {
+          "label": "style non conforme (PHP-CS-Fixer)",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 30,
+          "title": "Nouvelle logique métier sans test",
+          "source": "llm"
+        },
+        {
+          "severity": "minor",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 29,
+          "title": "Style non conforme (2 ligne(s) ajoutée(s))",
+          "source": "php-cs-fixer"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 30,
+          "title": "Nouvelle logique métier sans test"
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/527483e2439440efa43cee3ac24210c3"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 53510,
+      "run_ms": 26194,
+      "total_ms": 79704,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/11",
+      "sha": "87c284e"
+    },
+    {
+      "id": "S5-propre-php",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "clean",
+      "pr": 10,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/04573bf4b47b4fe9ad86922d56d8af2d"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 753,
+      "run_ms": 53342,
+      "total_ms": 54095,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/10",
+      "sha": "82297b3"
+    }
+  ],
+  "secret_leaks": {
+    "crm_li…": 0,
+    "Rct-20…": 0
+  },
+  "workers": 2
+}

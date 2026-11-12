@@ -37,6 +37,10 @@ class ReviewState(TypedDict, total=False):
     chunks_total: int
     chunks_failed: int
     incomplete_reasons: list[str]
+    # Contrôles statiques + CI (branche parallèle : clés distinctes de ai_review)
+    static_findings: list[Finding]
+    static_incomplete: list[str]
+    checks: list[dict]
 
     # Résultat
     verdict: str
@@ -61,3 +65,4 @@ class Services:
     rules_version: str = ""
     controls: Any = None   # .publishing_enabled() -> bool (interrupteur, lu à chaque écriture)
     events: Any = None     # journal d'événements (store.EventSink)
+    checker: Any = None    # agent.checks.CheckerClient (None : contrôles statiques désactivés)

@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from cases import CASES  # noqa: E402
+from cases import ALL_CASES  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent
 AGENT = ROOT.parent
@@ -91,6 +91,13 @@ def apply_changes(path: Path, changes: list[tuple]) -> None:
             raise ValueError(change[0])
 
 
+def suite_cases(suite: str) -> list[dict]:
+    return [c for c in ALL_CASES if c.get("suite", "base") == suite]
+
+
+CASES: list[dict] = suite_cases("base")
+
+
 def prepare(tag: str, only: list[str] | None) -> None:
     state = load_state(tag)
     for case in CASES:
@@ -112,7 +119,7 @@ def prepare(tag: str, only: list[str] | None) -> None:
 # ---------------------------------------------------------------------- launch
 def launch(tag: str, only: list[str] | None) -> None:
     state = load_state(tag)
-    todo = [c for c in CASES if c["id"] in state["cases"] and (not only or c["id"] in only)
+    todo = [c for c in ALL_CASES if c["id"] in state["cases"] and (not only or c["id"] in only)
             and "pr" not in state["cases"][c["id"]]]
     # 1) pousser toutes les branches (sans PR, aucun webhook « pull_request »)
     for repo in sorted({c["repo"] for c in todo}):
@@ -234,7 +241,7 @@ def collect(tag: str, timeout_s: int) -> None:
     runs = wait_runs(state, timeout_s)
     inbox = mails()
     results = []
-    for case in CASES:
+    for case in ALL_CASES:
         c = state["cases"].get(case["id"])
         if not c or "pr" not in c:
             continue
@@ -330,7 +337,10 @@ def main() -> None:
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--timeout", type=int, default=2400)
     ap.add_argument("--workers", type=int, help="nombre de workers (noté dans le rapport)")
+    ap.add_argument("--suite", default="base", choices=["base", "static"])
     a = ap.parse_args()
+    global CASES
+    CASES = suite_cases(a.suite)
     if a.step == "prepare":
         prepare(a.tag, a.only)
     elif a.step == "launch":

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  SEVERITY_ORDER, SKIP_REASON, STATUS_LABEL, VERDICT_HINT, cost, duration, shortSha,
+  CHECK_LABEL, CHECK_STATUS, SEVERITY_ORDER, SKIP_REASON, STATUS_LABEL, VERDICT_HINT, cost, duration, shortSha,
 } from "../format";
 import type { FindingView, RunView } from "../runState";
 import type { Finding, Rating } from "../types";
@@ -160,6 +160,37 @@ export function RunMonitor({ view, live, connected, stored, canRate = false, rep
         </Panel>
 
         <div className="side-col">
+          {view.checks.length > 0 && (
+            <Panel title="Contrôles automatiques" aside={<span className="muted">déterministes · peuvent bloquer</span>}>
+              <ul className="checks">
+                {view.checks.map((c) => {
+                  const st = CHECK_STATUS[c.status] || { label: c.status, tone: "muted" };
+                  return (
+                    <li key={c.name}>
+                      <span className={`check-dot tone-${st.tone}`} aria-hidden="true" />
+                      <span className="check-name">{CHECK_LABEL[c.name] || c.name}</span>
+                      <span className={`check-status tone-${st.tone}`}>
+                        {st.label}{c.count ? ` · ${c.count}` : ""}
+                      </span>
+                      {c.durationMs != null && c.status !== "running" && c.status !== "pending" && (
+                        <span className="check-time">{duration(c.durationMs)}</span>
+                      )}
+                      {c.message && <span className="check-msg">{c.message}</span>}
+                      {c.runs && c.runs.length > 0 && (
+                        <span className="check-runs">
+                          {c.runs.map((r) => (
+                            <a key={r.name} href={r.url || undefined} target="_blank" rel="noreferrer">
+                              {r.name} : {r.conclusion || r.status}
+                            </a>
+                          ))}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </Panel>
+          )}
           <Panel title="Couverture du diff">
             <ul className="files">
               {view.files.map((f) => (

@@ -74,6 +74,21 @@ class Settings(BaseSettings):
     MIN_COMMENT_SEVERITY: str = "minor"
     MAX_INLINE_COMMENTS: int = 30
 
+    # --- Contrôles statiques et CI (nœud static_checks, en parallèle de la revue IA) ---
+    # Conteneur « checker » isolé : gitleaks, composer audit, PHPStan, PHP-CS-Fixer.
+    CHECKS_ENABLED: bool = False
+    CHECKER_URL: str = "http://checker:8090"
+    CHECKER_TIMEOUT_SECONDS: float = 900
+    CHECK_MAX_ARCHIVE_MB: int = 50
+    PHPSTAN_LEVEL: int = 5
+    # Résultat des tests lu sur la CI du dépôt (check runs GitHub), jamais exécutés ici.
+    CI_ENABLED: bool = True
+    CI_WAIT_SECONDS: int = 600       # attente maximale de la fin de la CI
+    CI_POLL_SECONDS: int = 15
+    CI_GRACE_SECONDS: int = 60       # délai avant de conclure « aucune CI »
+    CI_REQUIRED: bool = False        # true : pas de CI = analyse incomplète
+    CI_CHECK_NAMES: str = ""         # vide = tous les checks sauf celui de l'agent
+
     # --- Alerte email (PR bloquante) ---
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587
@@ -117,6 +132,10 @@ class Settings(BaseSettings):
     @property
     def trigger_actions(self) -> list[str]:
         return self._csv(self.TRIGGER_ACTIONS)
+
+    @property
+    def ci_check_names(self) -> list[str]:
+        return self._csv(self.CI_CHECK_NAMES)
 
     @property
     def ignore_patterns(self) -> list[str]:

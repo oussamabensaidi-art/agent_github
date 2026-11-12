@@ -15,6 +15,7 @@ import re
 import time
 
 from agent import prompts
+from agent.checks import changed_map, evaluate_ci, tool_findings, tool_incomplete
 from agent.diff import FileDiff, build_chunks, excerpt, file_from_github, filter_files, is_incomplete_reason
 from agent.events import emit
 from agent.notify import build_alert
@@ -182,28 +183,119 @@ async def ai_review(state: ReviewState, config) -> dict:
             "incomplete_reasons": incomplete}
 
 
+async def _run_checker(s: Services, state: ReviewState, changed: dict) -> list[dict]:
+    t0 = time.perf_counter()
+    emit("check_tool", tool="checker", status="running")
+    try:
+        archive = await s.github.download_tarball(state["repo"], state["head_sha"],
+                                                  s.settings.CHECK_MAX_ARCHIVE_MB * 1024 * 1024)
+        return await s.checker.check(archive, changed, s.settings.PHPSTAN_LEVEL)
+    except Exception as e:  # noqa: BLE001 — checker indisponible : incomplet, jamais vert
+        log.warning("contrôles statiques indisponibles : %s", e)
+        return [{"name": "checker", "status": "error", "findings": [],
+                 "duration_ms": round((time.perf_counter() - t0) * 1000),
+                 "message": redact_text(f"{type(e).__name__}: {e}")[0][:300]}]
+
+
+def _ci_done(st: str, elapsed: float, settings) -> bool:
+    return (st == "done" or (st == "pending" and elapsed >= settings.CI_WAIT_SECONDS)
+            or (st == "none" and elapsed >= settings.CI_GRACE_SECONDS))
+
+
+async def _wait_ci(s: Services, state: ReviewState) -> dict:
+    """Attend la fin de la CI du dépôt (sondage), sans jamais lever d'exception."""
+    t0 = time.perf_counter()
+    st, ci_findings, ci_incomplete, summary = "none", [], [], []
+    try:
+        while True:
+            runs = await s.github.list_check_runs(state["repo"], state["head_sha"])
+            st, ci_findings, ci_incomplete, summary = evaluate_ci(runs, s.settings.CHECK_NAME,
+                                                                  s.settings.ci_check_names)
+            if _ci_done(st, time.perf_counter() - t0, s.settings):
+                break
+            emit("check_tool", tool="ci", status="pending", runs=summary)
+            await asyncio.sleep(s.settings.CI_POLL_SECONDS)
+    except Exception as e:  # noqa: BLE001
+        log.warning("lecture de la CI impossible : %s", e)
+        st, ci_incomplete = "error", [f"CI du dépôt : lecture impossible ({type(e).__name__})"]
+    duration = round((time.perf_counter() - t0) * 1000)
+    if st == "pending":
+        ci_incomplete = [f"CI du dépôt non terminée après {s.settings.CI_WAIT_SECONDS} s : tests non vérifiés"]
+    if st == "none" and s.settings.CI_REQUIRED:
+        ci_incomplete = ["aucune CI sur ce dépôt : tests non exécutés"]
+    status = {"done": "failed" if ci_findings else ("error" if ci_incomplete else "ok"),
+              "none": "error" if s.settings.CI_REQUIRED else "skipped",
+              "pending": "pending", "error": "error"}[st]
+    return {"name": "ci", "status": status, "duration_ms": duration, "runs": summary,
+            "message": "aucune CI détectée" if st == "none" else "",
+            "_findings": ci_findings, "_incomplete": ci_incomplete}
+
+
+@node()
+async def static_checks(state: ReviewState, config) -> dict:
+    """Contrôles déterministes, en parallèle de ai_review : checker isolé + CI du dépôt.
+
+    Ne renvoie jamais `error` (branche parallèle) : une panne rend l'analyse incomplète."""
+    s = svc(config)
+    if s.checker is None:
+        return {"static_findings": [], "static_incomplete": [], "checks": []}
+    changed = changed_map(state["files"], state.get("skipped", []))
+    jobs = [_run_checker(s, state, changed)]
+    if s.settings.CI_ENABLED:
+        jobs.append(_wait_ci(s, state))
+    results = await asyncio.gather(*jobs)
+    tools = results[0]
+    ci = results[1] if len(results) > 1 else None
+
+    findings = tool_findings(tools) + (ci["_findings"] if ci else [])
+    if tools and tools[0]["name"] == "checker":
+        incomplete = ["contrôles statiques indisponibles : " + tools[0].get("message", "")[:160]]
+    else:
+        incomplete = tool_incomplete(tools)
+    if ci:
+        incomplete += ci["_incomplete"]
+    files = {f.path: f for f in state["files"]}
+    for k, f in enumerate(findings, start=1):
+        f.id = f"t{k}"
+        emit("finding", **finding_event(f, files))
+    checks = []
+    for t in tools + ([ci] if ci else []):
+        entry = {"name": t["name"], "status": t["status"], "duration_ms": t.get("duration_ms", 0),
+                 "count": sum(1 for f in findings if f.source == t["name"]),
+                 "message": redact_text(t.get("message") or "")[0][:300]}
+        if t.get("runs"):
+            entry["runs"] = t["runs"]
+        checks.append(entry)
+        emit("check_tool", tool=entry["name"], **{k: v for k, v in entry.items() if k != "name"})
+    emit("checks_finished", count=len(findings), incomplete=incomplete)
+    return {"static_findings": findings, "static_incomplete": incomplete, "checks": checks}
+
+
 @node()
 async def decide(state: ReviewState, config) -> dict:
     s = svc(config)
+    if state.get("error"):
+        return {}  # la revue IA a échoué : routage vers `fail`
     commentable = {f.path: f.commentable for f in state["files"]}
     findings, dropped = validate_findings_detailed(
-        state.get("secret_findings", []) + state.get("llm_findings", []),
+        state.get("secret_findings", []) + state.get("static_findings", []) + state.get("llm_findings", []),
         commentable,
         s.settings.MIN_COMMENT_SEVERITY,
     )
     emit("findings_validated", kept=[f.id for f in findings],
          dropped=[{"id": f.id, "reason": r} for f, r in dropped])
-    incomplete = state.get("incomplete_reasons", [])
+    incomplete = list(state.get("incomplete_reasons", [])) + list(state.get("static_incomplete", []))
     pilot = s.settings.PILOT_MODE
     verdict = compute_verdict(findings, incomplete, pilot)
     inline_count = min(sum(1 for f in findings if f.inline), s.settings.MAX_INLINE_COMMENTS)
     summary = render_summary(verdict, findings, inline_count, state.get("skipped", []),
                              incomplete, s.llm.model, state["head_sha"], s.rules_version, pilot,
-                             details_url(s, state))
+                             details_url(s, state), state.get("checks"))
     counts = {sev: sum(1 for f in findings if f.severity == sev) for sev in ("critical", "major", "minor", "info")}
     emit("verdict", verdict=verdict, counts=counts, incomplete_reasons=incomplete,
          rules_version=s.rules_version, pilot_mode=pilot)
-    return {"findings": findings, "verdict": verdict, "summary": summary, "inline_count": inline_count}
+    return {"findings": findings, "verdict": verdict, "summary": summary, "inline_count": inline_count,
+            "incomplete_reasons": incomplete}
 
 
 @node()

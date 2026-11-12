@@ -661,3 +661,21 @@ input:focus, select:focus { outline: none; border-color: var(--accent); box-shad
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
+
+/* Contrôles automatiques (outils déterministes + CI) */
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 12.5px; }
+.checks li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; column-gap: 9px; row-gap: 2px; align-items: center; }
+.check-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface-3); border: 1px solid var(--line-3); }
+.check-dot.tone-good { background: var(--good); border-color: transparent; }
+.check-dot.tone-warning { background: var(--warning); border-color: transparent; }
+.check-dot.tone-serious { background: var(--serious); border-color: transparent; }
+.check-dot.tone-critical { background: var(--critical); border-color: transparent; }
+.check-dot.tone-info { background: var(--accent); border-color: transparent; animation: pulse 1.4s ease-in-out infinite; }
+.check-name { color: var(--text-1); }
+.check-status { font-size: 11.5px; color: var(--text-3); text-align: right; }
+.check-status.tone-good { color: var(--good-text); }
+.check-status.tone-warning { color: var(--warning-text, var(--warning)); }
+.check-status.tone-serious, .check-status.tone-critical { color: var(--critical-text); }
+.check-time, .check-msg, .check-runs { grid-column: 2 / 4; font-size: 11.5px; color: var(--text-3); overflow-wrap: anywhere; }
+.check-runs { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.check-runs a { color: var(--text-2); }

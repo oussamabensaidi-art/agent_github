@@ -1,0 +1,48 @@
+{
+  "tag": "s1",
+  "cases": {
+    "S1-phpstan-methode": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/s1/S1-phpstan-methode",
+      "sha": "a16d77ae53a47e997d619e7aff2ee89893f7e8ea",
+      "pr": 12,
+      "opened_at": 1794485475.6645389,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/12"
+    },
+    "S2-ci-en-echec": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/s1/S2-ci-en-echec",
+      "sha": "5b1578ba5ab39b1554e8a7f1b7aa73ea4ed480ca",
+      "pr": 9,
+      "opened_at": 1794485474.9492817,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/9"
+    },
+    "S3-dependance-vulnerable": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/s1/S3-dependance-vulnerable",
+      "sha": "ff7a2ed4df887741b17981801dd67ef3884b0dda",
+      "pr": 9,
+      "opened_at": 1794485475.2880776,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/9"
+    },
+    "S4-style": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/s1/S4-style",
+      "sha": "87c284e2949de4e6ad2b2074ec63799aff4bebb9",
+      "pr": 11,
+      "opened_at": 1794485475.259899,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/11"
+    },
+    "S5-propre-php": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/s1/S5-propre-php",
+      "sha": "82297b3a5b6da4ec23677aff998f47b0aa08d18a",
+      "pr": 10,
+      "opened_at": 1794485475.301913,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/10"
+    }
+  },
+  "launched_at": 1794485471.283552,
+  "launch_spread_s": 4.4,
+  "workers": 2
+}

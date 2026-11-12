@@ -76,6 +76,7 @@ export const NODE_LABEL: Record<string, string> = {
   load_diff: "Diff filtré",
   scan_secrets: "Secrets",
   ai_review: "Revue IA",
+  static_checks: "Contrôles",
   decide: "Verdict",
   publish: "Publication",
   alert: "Alerte",
@@ -88,6 +89,7 @@ export const NODE_HINT: Record<string, string> = {
   load_diff: "fichiers filtrés, limites appliquées",
   scan_secrets: "secrets masqués avant le modèle",
   ai_review: "lots analysés en parallèle",
+  static_checks: "outils + CI, en parallèle",
   decide: "règles déterministes versionnées",
   publish: "commit revérifié, revue COMMENT",
   alert: "email si bloquante",
@@ -103,6 +105,34 @@ export const SKIP_REASON: Record<string, string> = {
 export const SOURCE_LABEL: Record<string, string> = {
   llm: "IA · avis",
   "secret-scan": "Détection de secrets",
+  gitleaks: "gitleaks",
+  "composer-audit": "composer audit",
+  phpstan: "PHPStan",
+  "php-cs-fixer": "PHP-CS-Fixer",
+  ci: "CI du dépôt",
+};
+
+/** Sources déterministes (ne dépendent pas d'un modèle) : peuvent bloquer en mode pilote. */
+export const DETERMINISTIC = new Set(["secret-scan", "gitleaks", "composer-audit", "phpstan", "php-cs-fixer", "ci"]);
+
+export const CHECK_LABEL: Record<string, string> = {
+  checker: "Conteneur de contrôle",
+  gitleaks: "gitleaks · secrets",
+  "composer-audit": "composer audit · dépendances",
+  phpstan: "PHPStan · analyse statique",
+  "php-cs-fixer": "PHP-CS-Fixer · style",
+  ci: "CI du dépôt · tests",
+};
+
+export const CHECK_STATUS: Record<string, { label: string; tone: string }> = {
+  running: { label: "en cours", tone: "info" },
+  pending: { label: "CI en cours", tone: "info" },
+  ok: { label: "rien à signaler", tone: "good" },
+  findings: { label: "remarques", tone: "warning" },
+  failed: { label: "en échec", tone: "critical" },
+  skipped: { label: "non applicable", tone: "muted" },
+  error: { label: "en erreur", tone: "serious" },
+  timeout: { label: "délai dépassé", tone: "serious" },
 };
 
 export const shortSha = (sha: string | null | undefined) => (sha ? sha.slice(0, 7) : "");

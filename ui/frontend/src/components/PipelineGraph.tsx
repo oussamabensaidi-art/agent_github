@@ -1,8 +1,9 @@
-import { NODE_HINT, NODE_LABEL, SKIP_REASON, VERDICT_LABEL, VERDICT_TONE, duration } from "../format";
+import { DETERMINISTIC, NODE_HINT, NODE_LABEL, SKIP_REASON, VERDICT_LABEL, VERDICT_TONE, duration } from "../format";
 import type { ChunkView, NodeView, RunView } from "../runState";
 
 // Graphe LangGraph de l'agent : les nœuds s'allument à l'exécution, la revue IA
-// se déploie en lots parallèles qui convergent vers le verdict.
+// se déploie en lots parallèles qui convergent vers le verdict ; les contrôles
+// déterministes (outils + CI) tournent sur une seconde voie, en parallèle.
 
 const W = 112;
 const H = 60;
@@ -62,9 +63,14 @@ export function PipelineGraph({ view, now }: { view: RunView; now: number }) {
   const rows = compact ? Math.min(6, chunks.length) : chunks.length;
   const fanH = compact ? rows * 24 : chunks.length * 32;
   const failing = Boolean(view.failNode);
-  const height = Math.max(220, fanH + 90) + (failing ? 70 : 0);
-  const cy = failing ? (height - 70) / 2 : height / 2;
+  const checksNode = view.nodes.static_checks;
+  const lane = view.checks.length > 0 || checksNode?.status === "running";
+  const mainH = Math.max(220, fanH + 90);
+  const height = mainH + (lane ? 92 : 0) + (failing ? 70 : 0);
+  const cy = mainH / 2;
   const top = cy - fanH / 2;
+  const laneX = FAN_X + (FAN_W - W) / 2;
+  const laneY = mainH + 4;
 
   const chunkPos = (i: number) => compact
     ? { x: FAN_X + 14 + Math.floor(i / 6) * ((FAN_W - 28) / Math.max(cols, 1)), y: top + (i % 6) * 24 }
@@ -79,6 +85,10 @@ export function PipelineGraph({ view, now }: { view: RunView; now: number }) {
   };
 
   const secrets = view.findings.filter((f) => f.source === "secret-scan").length;
+  const toolFindings = view.findings.filter((f) => DETERMINISTIC.has(f.source) && f.source !== "secret-scan").length;
+  const laneSub = !checksNode || checksNode.status === "running"
+    ? `en cours · ${duration((now - (checksNode?.started || now)) * 1000)}`
+    : `${view.checks.filter((c) => c.name !== "checker").length} contrôle(s) · ${duration(checksNode.duration)}`;
   const llmFindings = view.findings.filter((f) => f.source === "llm").length;
   const skippedPublish = view.publishSkips.find((s) => s.step !== "alerte email");
 
@@ -136,6 +146,29 @@ export function PipelineGraph({ view, now }: { view: RunView; now: number }) {
           <text x={FAN_X + FAN_W / 2} y={top - 12} textAnchor="middle" className="g-fan-label">
             {`${chunks.length} lot${chunks.length > 1 ? "s" : ""} · ${view.concurrency ?? "?"} en parallèle`}
           </text>
+        )}
+
+        {/* voie parallèle : contrôles déterministes */}
+        {lane && (
+          <g>
+            <path className={edge("scan_secrets", "static_checks")}
+              d={`M${X.scan_secrets + W} ${cy} C${X.scan_secrets + W + 70} ${cy}, ${laneX - 70} ${laneY + H / 2}, ${laneX} ${laneY + H / 2}`} />
+            <path className={`g-edge ${checksNode && checksNode.status !== "running" ? "g-edge-done" : ""}`}
+              d={`M${laneX + W} ${laneY + H / 2} C${laneX + W + 40} ${laneY + H / 2}, ${X.decide - 40} ${cy}, ${X.decide} ${cy}`} />
+            <g className={nodeClass(checksNode)} transform={`translate(${laneX},${laneY})`}>
+              <title>{`${NODE_LABEL.static_checks} — ${NODE_HINT.static_checks}`}</title>
+              {checksNode?.status === "running" && <rect className="g-halo" x={-5} y={-5} width={W + 10} height={H + 10} rx={18} />}
+              <rect className="g-box" width={W} height={H} rx={14} />
+              <text x={14} y={20} className="g-index">04b</text>
+              <text x={14} y={38} className="g-label">{NODE_LABEL.static_checks}</text>
+              <text x={14} y={52} className="g-sub">{laneSub}</text>
+              {toolFindings > 0 && (
+                <g className="g-badge" transform={`translate(${W - 10},-8)`}>
+                  <circle r={11} /><text textAnchor="middle" y={4}>{toolFindings}</text>
+                </g>
+              )}
+            </g>
+          </g>
         )}
 
         {/* commit obsolète : saut direct vers le journal */}

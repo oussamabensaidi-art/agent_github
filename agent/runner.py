@@ -9,6 +9,7 @@ import time
 import uuid
 
 from agent.audit import AuditLog
+from agent.checks import CheckerClient
 from agent.github import GitHubAppAuth, GitHubClient
 from agent.graph import review_graph
 from agent.llm import OllamaClient, OpenRouterClient, Qwen3ApiClient
@@ -66,6 +67,8 @@ def build_services(settings, github, store=None) -> Services:
         rules_version=rules_version(rules),
         controls=store,
         events=store,
+        checker=(CheckerClient(settings.CHECKER_URL, settings.CHECKER_TIMEOUT_SECONDS)
+                 if settings.CHECKS_ENABLED and settings.CHECKER_URL else None),
     )
 
 

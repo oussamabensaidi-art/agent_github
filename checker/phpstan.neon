@@ -1,0 +1,6 @@
+# Configuration PHPStan de l'agent (celle du dépôt n'est jamais utilisée :
+# un phpstan.neon peut déclarer des bootstrapFiles, donc exécuter du PHP).
+parameters:
+    tmpDir: /tmp/phpstan
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false

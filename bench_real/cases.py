@@ -12,6 +12,7 @@ Attendus (vérité terrain, ce qu'un relecteur humain signalerait) :
              de gravité >= min, contient un des mots-clés (titre + explication),
              ou provient de la source indiquée (secret-scan).
 """
+from pathlib import Path
 from textwrap import dedent
 
 R1, R2, R3 = "test-agent-revue/project_test_1", "test-agent-revue/project_test_2", "test-agent-revue/project_test_3"
@@ -332,3 +333,82 @@ use Symfony\\Component\\HttpFoundation\\StreamedResponse;"""),
         "expect": {"verdicts": ["ANALYSE_INCOMPLETE"], "find": []},
     },
 ]
+
+# ---------------------------------------------------------------------- suite « static »
+# Contrôles déterministes (conteneur checker + CI du dépôt) : python run_bench.py ... --suite static
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+CI_PATH = "(intégration continue)"
+
+STATIC_CASES: list[dict] = [
+    {
+        "id": "S1-phpstan-methode", "repo": R1, "kind": "defect", "suite": "static",
+        "title": "Export JSON des totaux annuels",
+        "body": "Ajoute un point d'entrée JSON avec le total annuel de chaque contrat.",
+        "changes": [
+            ("edit", CTRL, """    #[Route('/nouveau', name: 'contract_new', methods: ['GET', 'POST'])]""",
+             """    #[Route('/totaux.json', name: 'contract_totals', methods: ['GET'])]
+    public function totals(): Response
+    {
+        $totals = [];
+        foreach ($this->contracts->findAll() as $contract) {
+            $totals[$contract->getReference()] = $this->calculator->annualTotalCents($contract);
+        }
+
+        return $this->json($totals);
+    }
+
+    #[Route('/nouveau', name: 'contract_new', methods: ['GET', 'POST'])]"""),
+        ],
+        "expect": {"verdicts": ["A_VERIFIER", "BLOQUANTE"],
+                   "find": [{"label": "méthode inexistante (PHPStan)", "path": CTRL, "min": "major",
+                             "source": "phpstan"}]},
+    },
+    {
+        "id": "S2-ci-en-echec", "repo": R2, "kind": "defect", "suite": "static",
+        "title": "Calcul de prime : plafonnement",
+        "body": "La prime ne dépasse plus le montant de référence du produit.",
+        "changes": [
+            ("edit", CALC, """        return max($computed, $product->minimumPremiumCents());""",
+             """        return min($computed, $product->minimumPremiumCents());"""),
+        ],
+        "expect": {"verdicts": ["BLOQUANTE"],
+                   "find": [{"label": "tests en échec dans la CI", "path": CI_PATH, "min": "critical", "source": "ci"}]},
+    },
+    {
+        "id": "S3-dependance-vulnerable", "repo": R3, "kind": "defect", "suite": "static",
+        "title": "Ajout du client HTTP Guzzle",
+        "body": "Ajoute guzzlehttp/guzzle pour les futurs appels au CRM.",
+        "changes": [
+            ("new", "composer.json", (FIXTURES / "s3" / "composer.json").read_text(encoding="utf-8")),
+            ("new", "composer.lock", (FIXTURES / "s3" / "composer.lock").read_text(encoding="utf-8")),
+        ],
+        "expect": {"verdicts": ["BLOQUANTE"],
+                   "find": [{"label": "dépendance vulnérable (composer audit)", "path": "composer.lock",
+                             "min": "critical", "source": "composer-audit"}]},
+    },
+    {
+        "id": "S4-style", "repo": R1, "kind": "defect", "suite": "static",
+        "title": "Prime mensuelle",
+        "body": "Ajoute le calcul de la prime mensuelle.",
+        "changes": [
+            ("edit", CALC, """    public function taxCents(int $premiumCents): int""",
+             """    public function monthlyCents( int $premiumCents ) : int {
+        return intdiv( $premiumCents , 12 );
+    }
+
+    public function taxCents(int $premiumCents): int"""),
+        ],
+        "expect": {"verdicts": ["CONTROLES_SATISFAITS", "A_VERIFIER"],
+                   "find": [{"label": "style non conforme (PHP-CS-Fixer)", "path": CALC, "min": "minor",
+                             "source": "php-cs-fixer"}]},
+    },
+    {
+        "id": "S5-propre-php", "repo": R2, "kind": "clean", "suite": "static",
+        "title": "Montants : filtre Twig `money` testé",
+        "body": "Remplace le formatage des montants du macro par un filtre Twig testé unitairement.",
+        "changes": next(c["changes"] for c in CASES if c["id"] == "C3-filtre-twig-money"),
+        "expect": {"verdicts": ["CONTROLES_SATISFAITS", "A_VERIFIER"], "find": []},
+    },
+]
+
+ALL_CASES = CASES + STATIC_CASES

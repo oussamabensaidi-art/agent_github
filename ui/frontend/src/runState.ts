@@ -5,7 +5,7 @@ import type { ExcerptLine, Finding, RunEvent, Severity, Verdict } from "./types"
 // Vue d'une analyse reconstruite événement par événement : la même pour le direct et la relecture.
 
 export type NodeStatus = "idle" | "running" | "ok" | "error" | "stale" | "skipped";
-export const PIPELINE = ["fetch_pr", "load_diff", "scan_secrets", "ai_review", "decide", "publish", "alert", "audit"];
+export const PIPELINE = ["fetch_pr", "load_diff", "scan_secrets", "ai_review", "static_checks", "decide", "publish", "alert", "audit"];
 
 export interface NodeView { status: NodeStatus; started?: number; finished?: number; duration?: number }
 export interface ChunkView {
@@ -18,6 +18,14 @@ export interface ChunkView {
   duration?: number;
   findings?: number;
   error?: string;
+}
+export interface CheckView {
+  name: string;
+  status: string;
+  durationMs?: number;
+  count?: number;
+  message?: string;
+  runs?: { name: string; status: string; conclusion: string | null; url: string }[];
 }
 export interface FindingView extends Finding {
   state: "raw" | "kept" | "dropped";
@@ -47,6 +55,7 @@ export interface RunView {
   nodes: Record<string, NodeView>;
   failNode?: string;
   chunks: ChunkView[];
+  checks: CheckView[];
   findings: FindingView[];
   files: { path: string; status: string; additions: number; deletions: number }[];
   skipped: { path: string; reason: string; incomplete: boolean }[];
@@ -66,7 +75,7 @@ export interface RunView {
 }
 
 export const emptyRun = (runId: string): RunView => ({
-  runId, nodes: {}, chunks: [], findings: [], files: [], skipped: [], incompleteReasons: [],
+  runId, nodes: {}, chunks: [], checks: [], findings: [], files: [], skipped: [], incompleteReasons: [],
   publishSkips: [], status: "queued", lastSeq: -1,
 });
 
@@ -117,6 +126,17 @@ export function applyEvent(v: RunView, ev: RunEvent): RunView {
                 findings: d.findings, error: d.error }
             : c),
       };
+    case "check_tool": {
+      const name = d.tool as string;
+      if (name !== "checker" && n.checks.some((c) => c.name === "checker" && c.status === "running")) {
+        n.checks = n.checks.filter((c) => c.name !== "checker");
+      }
+      const next: CheckView = {
+        name, status: d.status, durationMs: d.duration_ms, count: d.count, message: d.message, runs: d.runs,
+      };
+      const exists = n.checks.some((c) => c.name === name);
+      return { ...n, checks: exists ? n.checks.map((c) => (c.name === name ? { ...c, ...next } : c)) : [...n.checks, next] };
+    }
     case "finding":
       if (n.findings.some((f) => f.id === d.id)) return n;
       return {

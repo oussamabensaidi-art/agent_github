@@ -3,10 +3,11 @@
 Verdict v2 (règles déterministes, versionnées) — 4 états :
 
   1. BLOQUANTE            : remarque critique d'une source DÉTERMINISTE (détection de
-                            secrets aujourd'hui). Hors mode pilote, une remarque critique
-                            de l'IA bloque aussi.
+                            secrets, gitleaks, dépendance vulnérable grave, CI en échec).
+                            Hors mode pilote, une remarque critique de l'IA bloque aussi.
   2. ANALYSE_INCOMPLETE   : une partie de la PR n'a pas été analysée (fichier trop gros,
-                            diff non fourni par GitHub, limite de taille, lot en échec).
+                            diff non fourni par GitHub, limite de taille, lot en échec,
+                            outil de contrôle en erreur, CI non terminée).
   3. A_VERIFIER           : remarque majeure, ou critique de l'IA en mode pilote.
   4. CONTROLES_SATISFAITS : sinon.
 
@@ -20,7 +21,9 @@ SEVERITIES = ["info", "minor", "major", "critical"]
 SEVERITY_LABEL = {"critical": "CRITIQUE", "major": "MAJEUR", "minor": "MINEUR", "info": "INFO"}
 
 # Sources dont le résultat ne dépend pas d'un modèle : seules autorisées à bloquer en pilote.
-DETERMINISTIC_SOURCES = {"secret-scan"}
+DETERMINISTIC_SOURCES = {"secret-scan", "gitleaks", "composer-audit", "phpstan", "php-cs-fixer", "ci"}
+# Sources de détection de secrets : les autres remarques sur la même ligne sont des doublons.
+SECRET_SOURCES = {"secret-scan", "gitleaks"}
 
 VERDICT_BLOCKING = "BLOQUANTE"
 VERDICT_CHECK = "A_VERIFIER"
@@ -63,12 +66,19 @@ STATUS_STATE = {
 }
 
 # Version des règles de verdict : à incrémenter à chaque changement de compute_verdict.
-VERDICT_RULES_VERSION = "verdict-v2"
+VERDICT_RULES_VERSION = "verdict-v3"  # v3 : contrôles statiques et CI comme sources déterministes
 
 # Chemin réservé aux remarques sur le titre / la description de la PR.
 PR_TEXT_PATH = "(titre / description de la PR)"
 
 MARKER = "<!-- calipso-pr-review -->"
+
+CHECK_LABEL = {"gitleaks": "gitleaks (secrets)", "composer-audit": "composer audit (dépendances)",
+               "phpstan": "PHPStan (analyse statique)", "php-cs-fixer": "PHP-CS-Fixer (style)",
+               "ci": "CI du dépôt (tests)"}
+CHECK_STATUS = {"ok": "✅ rien à signaler", "findings": "⚠️ remarques", "skipped": "➖ non applicable",
+                "error": "⚪ en erreur", "timeout": "⚪ délai dépassé", "pending": "⚪ non terminée",
+                "failed": "❌ en échec"}
 
 
 def rules_version(rules_text: str) -> str:
@@ -138,6 +148,7 @@ def validate_findings_detailed(
     # Lignes déjà signalées par le scanner de secrets : le modèle y voit
     # "[SECRET MASQUÉ]" et la recommente malgré la consigne (constaté avec le 7b).
     secret_lines = {(f.path, f.line) for f in findings if f.source == "secret-scan"}
+    any_secret_lines = {(f.path, f.line) for f in findings if f.source in SECRET_SOURCES}
     for f in findings:
         if f.severity not in SEVERITIES or not f.title:
             dropped.append((f, "format invalide"))
@@ -145,14 +156,17 @@ def validate_findings_detailed(
         if f.source == "llm" and rank(f.severity) < rank(min_severity):
             dropped.append((f, "sous le seuil de gravité"))
             continue
-        if f.source == "llm" and (f.path, f.line) in secret_lines:
+        if ((f.source == "llm" and (f.path, f.line) in any_secret_lines)
+                or (f.source == "gitleaks" and (f.path, f.line) in secret_lines)):
             dropped.append((f, "doublon d'un secret détecté"))
             continue
         if f.source == "secret-scan" and f.path == PR_TEXT_PATH:
             f.inline = False
         elif f.path not in commentable:
-            dropped.append((f, "fichier absent du diff (remarque inventée)"))
-            continue
+            if not f.deterministic:
+                dropped.append((f, "fichier absent du diff (remarque inventée)"))
+                continue
+            f.inline = False  # outil : fichier exclu du diff (composer.lock) ou CI → résumé
         else:
             f.inline = f.line is not None and f.line in commentable[f.path]
         key = (f.path, f.line, f.title.lower())
@@ -214,6 +228,7 @@ def render_summary(
     rules_ver: str = "",
     pilot_mode: bool = True,
     details_url: str = "",
+    checks: list[dict] | None = None,
 ) -> str:
     counts = {s: sum(1 for f in findings if f.severity == s) for s in reversed(SEVERITIES)}
     meta = f"Commit analysé : `{head_sha[:7]}` · modèle : `{model}`"
@@ -231,7 +246,14 @@ def render_summary(
     ]
     if pilot_mode:
         rows += ["", "> Mode pilote : les remarques de l'IA sont des avis. Seules les détections "
-                     "déterministes (secrets) peuvent rendre la PR bloquante."]
+                     "déterministes (secrets, contrôles automatiques, CI) peuvent rendre la PR bloquante."]
+    if checks:
+        rows += ["", "### Contrôles automatiques", "", "| Contrôle | Résultat | Durée |", "|---|---|---:|"]
+        for c in checks:
+            rows.append(f"| {CHECK_LABEL.get(c['name'], c['name'])} | {CHECK_STATUS.get(c['status'], c['status'])}"
+                        + (f" ({c['count']})" if c.get("count") else "")
+                        + (f" — {_neutralize(c['message'])[:120]}" if c.get("message") else "")
+                        + f" | {round((c.get('duration_ms') or 0) / 1000, 1)} s |")
 
     summary_only = [f for f in findings if not f.inline] + [f for f in findings if f.inline][inline_count:]
     if summary_only:
