@@ -31,6 +31,19 @@ class Settings(BaseSettings):
     DLQ_KEY: str = "prreview:dlq"
     DEDUP_TTL_SECONDS: int = 86400
 
+    # --- Fournisseur du modèle : "ollama", "qwen3api" (API LLM Calipso) ou "openrouter" (banc) ---
+    LLM_PROVIDER: str = "ollama"
+    QWEN3_API_URL: str = ""
+    QWEN3_ENDPOINT: str = "chat"
+    QWEN3_API_KEY: str = ""
+    QWEN3_MAX_TOKENS: int = 6144
+    QWEN3_MAX_THINKING_TOKENS: int = 3072
+    # Fenêtre de contexte du modèle servi (vLLM max_model_len) : prompt + réponse.
+    QWEN3_CONTEXT_TOKENS: int = 8192
+    # OpenRouter : banc de test uniquement (service externe, jamais de code réel)
+    OPENROUTER_MODEL: str = ""
+    OPENROUTER_API_KEY: str = ""
+
     # --- Modèle IA local (Ollama) ---
     LLM_BASE_URL: str = "http://localhost:11434"
     LLM_MODEL: str = "qwen2.5-coder:7b"
@@ -53,6 +66,10 @@ class Settings(BaseSettings):
 
     # --- Revue & verdict ---
     RULES_PATH: str = "rules/default.md"
+    # Mode pilote : les remarques de l'IA sont consultatives (jamais « bloquante » à elles seules).
+    PILOT_MODE: bool = True
+    # Lots de diff analysés en parallèle (appels simultanés au modèle).
+    LLM_CONCURRENCY: int = 3
     # Filtre anti-faux-positifs : sous ce niveau, pas de commentaire.
     MIN_COMMENT_SEVERITY: str = "minor"
     MAX_INLINE_COMMENTS: int = 30
@@ -68,6 +85,26 @@ class Settings(BaseSettings):
 
     # --- Journalisation ---
     AUDIT_LOG_PATH: str = "data/audit.jsonl"
+
+    # --- Interrupteur de publication (kill switch) ---
+    # Valeur initiale uniquement : la valeur courante est en base (table settings),
+    # modifiable depuis l'interface sans redéploiement.
+    PUBLISH_ENABLED: bool = True
+
+    # --- Journal d'événements et interface de suivi ---
+    DATABASE_URL: str = ""
+    EVENTS_STREAM_KEY: str = "prreview:events"
+    EVENTS_STREAM_MAXLEN: int = 20000
+    # Adresse publique de l'interface (lien « détail » des checks GitHub).
+    UI_PUBLIC_URL: str = "http://localhost:8020/ui"
+    # Comptes : "login:role:empreinte" séparés par des virgules ; role = admin | lecteur.
+    # Empreinte : python -m ui.auth
+    UI_USERS: str = ""
+    UI_SESSION_TTL_SECONDS: int = 43200
+    UI_COOKIE_SECURE: bool = False
+    # Mode démo : rejoue les PR fictives de e2e/fixtures.py (faux GitHub uniquement).
+    DEMO_MODE: bool = False
+    DEMO_SELF_URL: str = "http://127.0.0.1:8020"
 
     # --- Divers ---
     # true : analyse complète, mais rien n'est publié sur GitHub ni envoyé.

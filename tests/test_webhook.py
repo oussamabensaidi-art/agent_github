@@ -18,11 +18,13 @@ class FakeQueue:
     async def ping(self):
         return True
 
-    async def enqueue(self, job):
+    async def enqueue(self, job, before_push=None):
         key = (job["delivery_id"], job["head_sha"])
         if key in self.seen:
             return False
         self.seen.add(key)
+        if before_push:
+            await before_push()
         self.jobs.append(job)
         return True
 
@@ -65,8 +67,11 @@ def test_queues_opened_pr(client):
     r = post(client, payload())
     assert r.status_code == 202 and r.json()["status"] == "queued"
     job = main.queue.jobs[0]
-    assert job == {"delivery_id": "d1", "repo": "calipso/app", "pr_number": 5,
-                   "head_sha": "a" * 40, "installation_id": 7, "action": "opened"}
+    assert {k: job[k] for k in ("delivery_id", "repo", "pr_number", "head_sha", "installation_id", "action")} == {
+        "delivery_id": "d1", "repo": "calipso/app", "pr_number": 5,
+        "head_sha": "a" * 40, "installation_id": 7, "action": "opened"}
+    # v2 : chaque job porte son run (journal d'événements) et son heure de mise en file.
+    assert len(job["run_id"]) == 32 and job["queued_at"] > 0
 
 
 def test_duplicate_delivery(client):

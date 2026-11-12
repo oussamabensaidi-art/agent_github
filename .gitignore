@@ -6,3 +6,6 @@ data/
 secrets/
 *.pem
 e2e/.keys/
+ui/dist/
+ui/frontend/node_modules/
+bench_real/.work/

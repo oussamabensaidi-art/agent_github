@@ -34,12 +34,13 @@ class FakeGitHub:
             raise RuntimeError("API down")
         return self.files
 
-    async def start_status(self, repo, sha, name):
+    async def start_status(self, repo, sha, name, details_url=""):
         self.statuses.append(("start", None))
         return 123
 
-    async def finish_status(self, repo, sha, name, check_id, conclusion, title, summary):
-        self.statuses.append((conclusion, title))
+    async def finish_status(self, repo, sha, name, check_id, outcome, title, summary, details_url=""):
+        self.statuses.append((outcome, title))
+        self.last_summary = summary
 
     async def create_review(self, repo, number, sha, body, comments, fallback_body):
         self.reviews.append({"body": body, "comments": comments})
@@ -91,14 +92,15 @@ async def test_blocking_pr_is_commented_flagged_and_alerted(tmp_path):
         {"path": "src/Invented.php", "line": 1, "severity": "major", "category": "bug", "title": "Fantôme",
          "explanation": "x"},
     ])
-    s = make(tmp_path, llm=llm)
+    # Hors mode pilote : une remarque critique de l'IA rend la PR bloquante.
+    s = make(tmp_path, llm=llm, PILOT_MODE=False)
     result = await run_review(JOB, s)
 
     assert result["verdict"] == "BLOQUANTE"
     assert [f.title for f in result["findings"]] == ["Injection SQL"]
     review = s.github.reviews[0]
     assert review["comments"][0]["line"] == 3 and review["comments"][0]["side"] == "RIGHT"
-    assert s.github.statuses[-1][0] == "failure"
+    assert s.github.statuses[-1][0] == "BLOQUANTE"
     assert len(s.mailer.sent) == 1 and "PR bloquante" in s.mailer.sent[0]["Subject"]
     # Le lock file n'a pas été envoyé au modèle.
     assert "composer.lock" not in llm.prompts[0]
@@ -110,8 +112,8 @@ async def test_blocking_pr_is_commented_flagged_and_alerted(tmp_path):
 async def test_clean_pr_is_ready_without_alert(tmp_path):
     s = make(tmp_path)
     result = await run_review(JOB, s)
-    assert result["verdict"] == "PRETE"
-    assert s.github.statuses[-1][0] == "success"
+    assert result["verdict"] == "CONTROLES_SATISFAITS"
+    assert s.github.statuses[-1][0] == "CONTROLES_SATISFAITS"
     assert s.mailer.sent == []
 
 
@@ -129,12 +131,12 @@ async def test_secret_is_masked_before_llm_and_blocks(tmp_path):
     assert secret not in open(s.settings.AUDIT_LOG_PATH, encoding="utf-8").read()
 
 
-async def test_llm_failure_gives_a_verifier(tmp_path):
+async def test_llm_failure_gives_analyse_incomplete(tmp_path):
     s = make(tmp_path, llm=FakeLLM(fail=True))
     result = await run_review(JOB, s)
-    assert result["verdict"] == "A_VERIFIER"
-    assert "Revue incomplète" in result["summary"]
-    assert s.github.statuses[-1][0] == "neutral"
+    assert result["verdict"] == "ANALYSE_INCOMPLETE"
+    assert "Analyse incomplète" in result["summary"]
+    assert s.github.statuses[-1][0] == "ANALYSE_INCOMPLETE"
 
 
 async def test_stale_job_is_skipped(tmp_path):
@@ -149,14 +151,14 @@ async def test_github_error_goes_to_fail(tmp_path):
     s = make(tmp_path, github=FakeGitHub(fail_files=True))
     result = await run_review(JOB, s)
     assert "load_diff" in result["error"]
-    assert s.github.statuses[-1][0] == "neutral"
+    assert s.github.statuses[-1][0] == "ECHEC_AGENT"
     assert audit_lines(s)[-1]["status"] == "error"
 
 
 async def test_dry_run_publishes_nothing(tmp_path):
     s = make(tmp_path, llm=FakeLLM([{"path": "src/Repo.php", "line": 3, "severity": "critical",
                                      "category": "security", "title": "Injection SQL", "explanation": "x"}]),
-             DRY_RUN=True)
+             DRY_RUN=True, PILOT_MODE=False)
     result = await run_review(JOB, s)
     assert result["verdict"] == "BLOQUANTE"
     assert s.github.reviews == [] and s.github.statuses == [] and s.mailer.sent == []

@@ -11,6 +11,8 @@ from pathlib import Path
 import httpx
 import jwt
 
+from agent.review import CHECK_CONCLUSION, STATUS_STATE
+
 TOKEN_PERMISSIONS = {
     "contents": "read",
     "metadata": "read",
@@ -41,9 +43,9 @@ class GitHubAppAuth:
         key = Path(self.private_key_path).read_text()
         return jwt.encode({"iat": now - 60, "exp": now + 540, "iss": self.app_id}, key, algorithm="RS256")
 
-    async def token(self, installation_id: int) -> str:
+    async def token(self, installation_id: int, force: bool = False) -> str:
         cached = self._cache.get(installation_id)
-        if cached and cached[1] > time.time() + 120:
+        if cached and cached[1] > time.time() + 120 and not force:
             return cached[0]
         async with httpx.AsyncClient(base_url=self.api_url, timeout=20, transport=self._transport) as c:
             resp = await c.post(
@@ -61,8 +63,11 @@ class GitHubAppAuth:
 
 class GitHubClient:
     def __init__(self, token: str, api_url: str, use_checks: bool,
-                 transport: httpx.AsyncBaseTransport | None = None):
+                 transport: httpx.AsyncBaseTransport | None = None, refresh_token=None):
+        """`refresh_token` (mode App) : jeton révoqué avant son expiration (App réinstallée,
+        droits modifiés) → 401 → un nouveau jeton est demandé, une seule fois."""
         self.use_checks = use_checks
+        self._refresh = refresh_token
         headers = {
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
@@ -78,6 +83,10 @@ class GitHubClient:
 
     async def _req(self, method: str, url: str, **kw) -> httpx.Response:
         resp = await self._http.request(method, url, **kw)
+        if resp.status_code == 401 and self._refresh is not None:
+            self._http.headers["Authorization"] = f"Bearer {await self._refresh()}"
+            self._refresh = None
+            resp = await self._http.request(method, url, **kw)
         resp.raise_for_status()
         return resp
 
@@ -96,32 +105,36 @@ class GitHubClient:
             page += 1
 
     # ---- statut : check run (App) ou statut de commit (PAT) ----
+    # Correspondance verdict → GitHub : agent.review.CHECK_CONCLUSION / STATUS_STATE.
 
-    async def start_status(self, repo: str, sha: str, name: str) -> int | None:
+    async def start_status(self, repo: str, sha: str, name: str, details_url: str = "") -> int | None:
         if self.use_checks:
-            data = (await self._req("POST", f"/repos/{repo}/check-runs", json={
-                "name": name, "head_sha": sha, "status": "in_progress",
-            })).json()
+            body = {"name": name, "head_sha": sha, "status": "in_progress"}
+            if details_url:
+                body["details_url"] = details_url
+            data = (await self._req("POST", f"/repos/{repo}/check-runs", json=body)).json()
             return data["id"]
-        await self._req("POST", f"/repos/{repo}/statuses/{sha}", json={
-            "state": "pending", "context": name, "description": "Revue automatique en cours…",
-        })
+        body = {"state": "pending", "context": name, "description": "Revue automatique en cours…"}
+        if details_url:
+            body["target_url"] = details_url
+        await self._req("POST", f"/repos/{repo}/statuses/{sha}", json=body)
         return None
 
     async def finish_status(self, repo: str, sha: str, name: str, check_id: int | None,
-                            conclusion: str, title: str, summary: str) -> None:
-        """conclusion : success | neutral | failure (vocabulaire des check runs)."""
+                            outcome: str, title: str, summary: str, details_url: str = "") -> None:
+        """outcome : un verdict ou OUTCOME_FAILED / OUTCOME_SUPERSEDED (agent.review)."""
         if self.use_checks and check_id:
-            await self._req("PATCH", f"/repos/{repo}/check-runs/{check_id}", json={
-                "status": "completed", "conclusion": conclusion,
-                "output": {"title": title[:250], "summary": _cut(summary)},
-            })
+            body = {"status": "completed", "conclusion": CHECK_CONCLUSION[outcome],
+                    "output": {"title": title[:250], "summary": _cut(summary)}}
+            if details_url:
+                body["details_url"] = details_url
+            await self._req("PATCH", f"/repos/{repo}/check-runs/{check_id}", json=body)
             return
-        # Les statuts de commit n'ont pas de "neutral" : à vérifier → success + libellé.
-        state = {"success": "success", "neutral": "success", "failure": "failure"}.get(conclusion, "error")
-        await self._req("POST", f"/repos/{repo}/statuses/{sha}", json={
-            "state": state, "context": name, "description": title[:140],
-        })
+        # Statut de commit : seul « contrôles satisfaits » est vert (pas d'état neutre).
+        body = {"state": STATUS_STATE[outcome], "context": name, "description": title[:140]}
+        if details_url:
+            body["target_url"] = details_url
+        await self._req("POST", f"/repos/{repo}/statuses/{sha}", json=body)
 
     async def create_review(self, repo: str, number: int, sha: str, body: str,
                             comments: list[dict], fallback_body: str) -> dict:

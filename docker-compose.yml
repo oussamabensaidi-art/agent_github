@@ -2,15 +2,23 @@
 #  - api    : reçoit les webhooks GitHub, vérifie la signature, met en file.
 #  - worker : dépile et exécute le graphe LangGraph (une analyse à la fois ;
 #             scaler avec `docker compose up --scale worker=N`).
-#  - redis  : file d'attente + déduplication.
+#  - redis  : file d'attente + déduplication + diffusion en direct des événements.
+#  - db     : journal d'événements des analyses (Postgres), interrupteur, avis.
 #  - ollama : modèle local (GPU : ajouter docker-compose.gpu.yml).
+# L'interface de suivi est servie par l'api sous /ui (comptes : UI_USERS).
 services:
   api:
     build: .
     env_file: .env
+    environment:
+      DATABASE_URL: postgresql://prreview:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/prreview
     ports:
       - "8020:8020"
-    depends_on: [redis]
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8020/health')"]
@@ -22,7 +30,15 @@ services:
     build: .
     command: ["python", "-m", "worker"]
     env_file: .env
-    depends_on: [redis, ollama]
+    environment:
+      DATABASE_URL: postgresql://prreview:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}@db:5432/prreview
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
     volumes:
       - audit:/data
     secrets:
@@ -34,6 +50,21 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis:/data
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: prreview
+      POSTGRES_DB: prreview
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prreview -d prreview"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
 
   ollama:
@@ -49,4 +80,5 @@ secrets:
 volumes:
   audit:
   redis:
+  pgdata:
   ollama:

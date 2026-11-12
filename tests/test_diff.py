@@ -35,7 +35,7 @@ def test_filter_files_excludes_and_limits():
         gh("composer.lock"),
         gh("vendor/x/y.php"),
         gh("src/Removed.php", status="removed"),
-        gh("img/logo.png", patch=""),
+        gh("img/logo.png", patch="", additions=0, deletions=0),
         gh("src/Big.php", additions=5000, deletions=0),
         gh("src/Ok.php"),
         gh("src/Over.php", additions=10, deletions=0),

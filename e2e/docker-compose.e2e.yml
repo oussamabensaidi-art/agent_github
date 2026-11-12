@@ -13,6 +13,12 @@ services:
       GITHUB_API_URL: http://fake-github:9000
       DRY_RUN: "false"
       LLM_MODEL: ${E2E_MODEL:-qwen2.5-coder:0.5b}
+      # Autre fournisseur (ex. API qwen3 Calipso) : E2E_LLM_PROVIDER=qwen3api,
+      # E2E_QWEN3_ENDPOINT=chat|think, et son hôte ajouté à E2E_LLM_ALLOWED_HOSTS.
+      LLM_PROVIDER: ${E2E_LLM_PROVIDER:-ollama}
+      QWEN3_ENDPOINT: ${E2E_QWEN3_ENDPOINT:-chat}
+      OPENROUTER_MODEL: ${E2E_OPENROUTER_MODEL:-}
+      LLM_ALLOWED_HOSTS: ${E2E_LLM_ALLOWED_HOSTS:-localhost,127.0.0.1,ollama,host.docker.internal}
       LLM_TIMEOUT_SECONDS: "900"
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"

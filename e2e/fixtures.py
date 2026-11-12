@@ -97,16 +97,17 @@ PRS = {
     104: _pr(104, "PR déjà repoussée", "4" * 40, [added_file("src/A.php", CLEAN_SERVICE)]),
 }
 
-# Ce que chaque scénario doit produire, indépendamment du modèle :
+# Ce que chaque scénario doit produire, indépendamment du modèle (verdict v2, mode pilote) :
 #   verdicts = conclusions de check acceptables ; alert = True/False imposé, None = dépend du modèle.
-# 102 et 103 : le modèle peut ajouter des remarques, donc durcir le verdict ; on ne
-# vérifie que la borne déterministe (103 ne peut pas être "success" : revue incomplète).
+# En mode pilote, l'IA ne peut jamais rendre une PR « bloquante » (failure) :
+#   102 : success ou neutral, ou action_required si un lot échoue (petit modèle) ;
+#   103 : fichier trop gros → toujours « analyse incomplète » (action_required), jamais success.
 # La pertinence des remarques du modèle est rapportée, pas assertée.
 EXPECTED = {
-    101: {"verdicts": {"failure"}, "alert": True},            # secret → bloquant, toujours
-    102: {"verdicts": {"success", "neutral", "failure"}, "alert": None},
-    103: {"verdicts": {"neutral", "failure"}, "alert": None},  # fichier trop gros → jamais "prête"
-    104: {"verdicts": {None}, "alert": False},                 # obsolète → rien publié
+    101: {"verdicts": {"failure"}, "alert": True},                                   # secret → bloquante
+    102: {"verdicts": {"success", "neutral", "action_required"}, "alert": False},
+    103: {"verdicts": {"action_required"}, "alert": False},
+    104: {"verdicts": {None}, "alert": False},                                       # obsolète → rien publié
 }
 
 # Attendu d'un bon relecteur sur #101, pour juger le modèle (rapport seulement).

@@ -1,0 +1,48 @@
+# Tests contre le VRAI GitHub (DEV LOCAL UNIQUEMENT) — dépôt de test
+# test-agent-revue/project_test_1, GitHub App « calipso-revue-pr-test ».
+#   docker compose -f docker-compose.yml -f docker-compose.github.yml up -d --build
+#
+#  - smee    : relais smee.io → api (GitHub ne peut pas joindre localhost). Il ne
+#              transporte que l'événement webhook ; le code est lu par le worker
+#              via l'API GitHub. La signature HMAC est vérifiée par l'api.
+#  - mailpit : les alertes « bloquante » arrivent dans http://localhost:8025,
+#              aucune vraie boîte mail.
+#  - LLM     : API Qwen3 Calipso (/chat). En HTTP sur IP publique : acceptable
+#              pour ce dépôt de code fictif, PAS pour du code Calipso réel.
+# Ne pas déployer : en production, le webhook pointe directement sur l'api en HTTPS.
+services:
+  worker:
+    environment:
+      DRY_RUN: "false"
+      LLM_PROVIDER: qwen3api
+      QWEN3_ENDPOINT: chat
+      LLM_ALLOWED_HOSTS: localhost,127.0.0.1,ollama,host.docker.internal,188.40.58.26
+      LLM_TIMEOUT_SECONDS: "900"
+      # Fenêtre Qwen3 Calipso = 8192 jetons (prompt + réponse) : lots plus petits
+      # pour laisser ~4000 jetons de réponse (le modèle raisonne avant le JSON).
+      QWEN3_CONTEXT_TOKENS: "8192"
+      CHUNK_MAX_CHARS: "8000"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_STARTTLS: "false"
+      SMTP_USER: ""
+      ALERT_EMAILS: lead-dev@calipso.test
+      UI_PUBLIC_URL: http://localhost:8020/ui
+    depends_on: [mailpit]
+
+  api:
+    environment:
+      UI_PUBLIC_URL: http://localhost:8020/ui
+
+  smee:
+    image: node:22-alpine
+    command: ["npx", "--yes", "smee-client@5.0.0",
+              "--url", "${SMEE_URL:?SMEE_URL manquant dans .env}",
+              "--target", "http://api:8020/webhook/github"]
+    depends_on: [api]
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"

@@ -1,0 +1,16 @@
+# Démo de l'interface de suivi (DEV / DÉMO UNIQUEMENT) — à empiler sur le banc e2e :
+#   docker compose -f docker-compose.yml -f docker-compose.override.yml \
+#     -f e2e/docker-compose.e2e.yml -f docker-compose.demo.yml up -d --build
+# L'api et le worker parlent au faux GitHub : aucun vrai dépôt n'est touché.
+# Le bouton « Lancer la démo » envoie de vrais webhooks signés à l'api.
+services:
+  api:
+    environment:
+      DEMO_MODE: "true"
+      GITHUB_API_URL: http://fake-github:9000
+      UI_PUBLIC_URL: http://localhost:8020/ui
+    depends_on: [fake-github]
+
+  worker:
+    environment:
+      UI_PUBLIC_URL: http://localhost:8020/ui

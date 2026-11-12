@@ -1,5 +1,5 @@
 from agent.review import (
-    VERDICT_BLOCKING, VERDICT_CHECK, VERDICT_READY, Finding,
+    VERDICT_BLOCKING, VERDICT_CHECK, VERDICT_INCOMPLETE, VERDICT_OK, Finding,
     compute_verdict, finding_from_llm, render_comment, render_summary, validate_findings,
 )
 
@@ -42,11 +42,12 @@ def test_llm_duplicate_of_secret_finding_is_dropped():
 
 
 def test_verdict():
-    assert compute_verdict([F(severity="critical")], []) == VERDICT_BLOCKING
+    # Hors mode pilote, une remarque critique de l'IA bloque (comportement v1 conservé).
+    assert compute_verdict([F(severity="critical")], [], pilot_mode=False) == VERDICT_BLOCKING
     assert compute_verdict([F(severity="major")], []) == VERDICT_CHECK
-    assert compute_verdict([F(severity="minor")], ["trop gros"]) == VERDICT_CHECK
-    assert compute_verdict([F(severity="minor")], []) == VERDICT_READY
-    assert compute_verdict([], []) == VERDICT_READY
+    assert compute_verdict([F(severity="minor")], ["trop gros"]) == VERDICT_INCOMPLETE
+    assert compute_verdict([F(severity="minor")], []) == VERDICT_OK
+    assert compute_verdict([], []) == VERDICT_OK
 
 
 def test_finding_from_llm_tolerates_bad_input():
@@ -60,4 +61,4 @@ def test_rendering_neutralizes_mentions():
     assert "@team" not in render_comment(f)
     s = render_summary(VERDICT_CHECK, [f], 0, [("composer.lock", "exclu (lock / généré)")],
                        ["`x` non analysé : trop volumineux"], "m", "abcdef1234")
-    assert "@team" not in s and "Revue incomplète" in s and "composer.lock" in s
+    assert "@team" not in s and "Analyse incomplète" in s and "composer.lock" in s

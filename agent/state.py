@@ -13,6 +13,8 @@ class ReviewState(TypedDict, total=False):
     pr_number: int
     head_sha: str
     installation_id: int | None
+    run_id: str
+    queued_at: float | None
     started_at: float
 
     # PR
@@ -41,6 +43,8 @@ class ReviewState(TypedDict, total=False):
     summary: str
     inline_count: int
     published: bool
+    publish_skipped: str | None   # "dry_run" | "kill_switch"
+    superseded: bool              # un commit plus récent est arrivé avant la publication
     alert_sent: bool
     error: str | None
 
@@ -54,3 +58,6 @@ class Services:
     audit: Any
     settings: Any
     rules: str
+    rules_version: str = ""
+    controls: Any = None   # .publishing_enabled() -> bool (interrupteur, lu à chaque écriture)
+    events: Any = None     # journal d'événements (store.EventSink)

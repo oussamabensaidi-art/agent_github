@@ -104,6 +104,10 @@ def filter_files(
             skipped.append((f.path, "exclu (lock / généré)"))
         elif f.status == "removed":
             skipped.append((f.path, "exclu (fichier supprimé)"))
+        elif not f.patch and f.changed_lines > 0:
+            # GitHub omet le patch des diffs texte trop volumineux : ce fichier a
+            # changé mais n'a pas été relu → incomplet, jamais « exclu ».
+            skipped.append((f.path, f"diff non fourni par GitHub ({f.changed_lines} lignes modifiées)"))
         elif not f.patch:
             skipped.append((f.path, "exclu (binaire ou sans diff)"))
         elif f.changed_lines > max_file_lines:
@@ -176,3 +180,18 @@ def build_chunks(files: list[FileDiff], max_chars: int) -> list[str]:
     if buf:
         chunks.append(buf)
     return chunks
+
+
+def excerpt(f: FileDiff, line: int | None, radius: int = 3) -> list[dict]:
+    """Lignes du diff (déjà masqué) autour de `line`, pour l'interface de suivi."""
+    if line is None:
+        return []
+    idx = next((i for i, l in enumerate(f.lines) if l.new_line == line), None)
+    if idx is None:
+        return []
+    out = []
+    for l in f.lines[max(0, idx - radius): idx + radius + 1]:
+        if l.kind == "@":
+            continue
+        out.append({"n": l.new_line, "kind": l.kind, "text": l.text[:300], "target": l.new_line == line})
+    return out

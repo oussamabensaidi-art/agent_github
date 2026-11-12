@@ -7,17 +7,44 @@ import hashlib
 import hmac
 import json
 import logging
+import time
+import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException, Request
 
 from config import settings
 from jobqueue import JobQueue
+from store import NullStore, build_store
+from ui.auth import Sessions
+from ui.live import LiveHub
+from ui.routes import mount_ui
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("pr-review.api")
 
-app = FastAPI(title="Calipso PR Review Agent")
 queue = JobQueue()
+# Remplacé au démarrage par le journal Postgres si DATABASE_URL est défini.
+store = NullStore(settings.PUBLISH_ENABLED)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global store
+    store = build_store(settings, queue.redis)
+    await store.open()
+    hub = LiveHub(queue.redis, settings.EVENTS_STREAM_KEY)
+    if store.available:
+        hub.start()
+    app.state.store, app.state.queue, app.state.hub = store, queue, hub
+    app.state.sessions = Sessions(queue.redis, settings.UI_SESSION_TTL_SECONDS)
+    yield
+    await hub.stop()
+    await store.close()
+
+
+app = FastAPI(title="Calipso PR Review Agent", lifespan=lifespan)
+mount_ui(app)
 
 
 def verify_signature(secret: str, body: bytes, signature_header: str | None) -> bool:
@@ -84,7 +111,14 @@ async def github_webhook(
     if job is None:
         return {"status": "ignored"}
 
-    queued = await queue.enqueue(job)
+    job["run_id"] = uuid.uuid4().hex
+    job["queued_at"] = time.time()
+    demo = x_github_delivery.startswith("demo-")
+
+    async def register() -> None:
+        await store.create_run(job, demo=demo)
+
+    queued = await queue.enqueue(job, before_push=register)
     log.info("job %s %s#%s@%s", "queued" if queued else "duplicate",
              job["repo"], job["pr_number"], job["head_sha"][:7])
-    return {"status": "queued" if queued else "duplicate"}
+    return {"status": "queued", "run_id": job["run_id"]} if queued else {"status": "duplicate"}

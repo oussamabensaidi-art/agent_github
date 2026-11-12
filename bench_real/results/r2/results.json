@@ -1,0 +1,627 @@
+{
+  "tag": "r2",
+  "generated_at": "2026-11-11T09:50:40.225262+00:00",
+  "launch_spread_s": 3.6,
+  "results": [
+    {
+      "id": "D1-sql-injection",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 6,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "injection SQL (concaténation)",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Repository/ContractRepository.php",
+          "line": 79,
+          "title": "Injection SQL potentielle par concaténation de variable utilisateur",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/56566107d82d4c828320c8d602bc2987"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 18,
+      "run_ms": 38394,
+      "total_ms": 38412,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/6",
+      "sha": "b504eba"
+    },
+    {
+      "id": "D2-acces-suppression",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 8,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "route de suppression sans contrôle de droits",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 108,
+          "title": "Aucune vérification des droits avant suppression",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "templates/contract/show.html.twig",
+          "line": 24,
+          "title": "Manque de token CSRF dans le formulaire de suppression",
+          "source": "llm"
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 110,
+          "title": "Aucune vérification de l'existence du contrat",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "critical",
+          "path": "templates/contract/show.html.twig",
+          "line": 24,
+          "title": "Manque de token CSRF dans le formulaire de suppression"
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 110,
+          "title": "Aucune vérification de l'existence du contrat"
+        }
+      ],
+      "noise_major": 2,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 3 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/2372232d10e44ff19d51545a4569ed97"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 3,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 94010,
+      "run_ms": 32544,
+      "total_ms": 126554,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/8",
+      "sha": "318dc59"
+    },
+    {
+      "id": "D3-dump-oublie",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 8,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "dump() oublié",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 55,
+          "title": "Debug dump oublié en production",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/7fe9581cab354ddeb7c9b796b8c57b90"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 46773,
+      "run_ms": 29836,
+      "total_ms": 76609,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/8",
+      "sha": "b841f62"
+    },
+    {
+      "id": "D4-secret-en-dur",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 7,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "clé d'API en dur (détection déterministe)",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 12,
+          "title": "URL du CRM harcodée",
+          "source": "llm"
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 19,
+          "title": "Aucun test pour la logique métier",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 13,
+          "title": "Secret en dur détecté(e) dans le code",
+          "source": "secret-scan"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 12,
+          "title": "URL du CRM harcodée"
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 19,
+          "title": "Aucun test pour la logique métier"
+        }
+      ],
+      "noise_major": 2,
+      "dropped": 1,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 3 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/ed0a3027567944a0958a2939211101b6"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 3,
+      "mail_sent": true,
+      "mail_ok": true,
+      "queue_ms": 121857,
+      "run_ms": 38492,
+      "total_ms": 160349,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/7",
+      "sha": "478c483"
+    },
+    {
+      "id": "D5-montant-flottant",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 5,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "flottant + troncature au lieu d'arrondi",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 24,
+          "title": "Calcul de prime : perte de précision avec les flottants",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/71864d1bc66c4fae8c4a557fe58f04ac"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 473,
+      "run_ms": 32117,
+      "total_ms": 32590,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/5",
+      "sha": "ad61e87"
+    },
+    {
+      "id": "D6-reference-dupliquee",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 8,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "référence suivante non incrémentée (doublon)",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Repository/ContractRepository.php",
+          "line": 83,
+          "title": "Suppression de l'incrémentation du numéro de référence",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/b93ba63cdf6a4325af13a7cc0a6ddcab"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 32280,
+      "run_ms": 26592,
+      "total_ms": 58872,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/8",
+      "sha": "31552a1"
+    },
+    {
+      "id": "D7-xss-raw",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 9,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "|raw sur une donnée saisie (XSS)",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "templates/contract/show.html.twig",
+          "line": 12,
+          "title": "Risque XSS par utilisation de |raw sur donnée utilisateur",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/535567e5d4504ccca25de76fe780bf50"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 29260,
+      "run_ms": 17816,
+      "total_ms": 47076,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/9",
+      "sha": "2821fd8"
+    },
+    {
+      "id": "D8-secret-description",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 6,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "mot de passe dans la description de la PR",
+          "found": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "minor",
+          "path": "templates/contract/show.html.twig",
+          "line": 13,
+          "title": "Texte de libellé amélioré pour plus de clarté",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "(titre / description de la PR)",
+          "line": null,
+          "title": "Secret en dur détecté(e) dans le description de la PR",
+          "source": "secret-scan"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "minor",
+          "path": "templates/contract/show.html.twig",
+          "line": 13,
+          "title": "Texte de libellé amélioré pour plus de clarté"
+        }
+      ],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/fba9b4ad31e640c196e4c176646a6145"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": true,
+      "mail_ok": true,
+      "queue_ms": 4180,
+      "run_ms": 25172,
+      "total_ms": 29352,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/6",
+      "sha": "2ce9e03"
+    },
+    {
+      "id": "C1-export-csv",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "clean",
+      "pr": 6,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/bde4f8c4cbd9492c8223f74af9485efa"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 76572,
+      "run_ms": 45492,
+      "total_ms": 122064,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/6",
+      "sha": "cc2d58d"
+    },
+    {
+      "id": "C2-liste-pluriel",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "clean",
+      "pr": 7,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/b2a204e8ee7c4a458a9f7bec8a020e66"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 37891,
+      "run_ms": 56238,
+      "total_ms": 94129,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/7",
+      "sha": "126513f"
+    },
+    {
+      "id": "C3-filtre-twig-money",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "clean",
+      "pr": 7,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/7b6dda2593304066998e399b97fdfd97"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 58556,
+      "run_ms": 65099,
+      "total_ms": 123655,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/7",
+      "sha": "46ccdc0"
+    },
+    {
+      "id": "E1-gros-fichier",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "edge",
+      "pr": 5,
+      "status": "ok",
+      "verdict": "ANALYSE_INCOMPLETE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "ANALYSE_INCOMPLETE"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "action_required",
+        "title": "⚪ Analyse incomplète — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/e3cd22b77ee54ba4bd3722b2379db6ed"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "queue_ms": 519,
+      "run_ms": 4234,
+      "total_ms": 4753,
+      "chunks": 0,
+      "chunks_failed": 0,
+      "incomplete_reasons": [
+        "`tests/fixtures/portefeuille_2025.csv` non analysé : diff non fourni par GitHub (6001 lignes modifiées)"
+      ],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/5",
+      "sha": "e79009d"
+    }
+  ],
+  "secret_leaks": {
+    "crm_li…": 0,
+    "Rct-20…": 0
+  },
+  "workers": 3
+}

@@ -9,7 +9,7 @@ Le secret lui-même n'est jamais recopié dans une remarque, un log ou un email.
 import re
 
 from agent.diff import FileDiff
-from agent.review import Finding
+from agent.review import PR_TEXT_PATH, Finding
 
 PATTERNS: list[tuple[str, re.Pattern]] = [
     ("Clé privée", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
@@ -37,6 +37,43 @@ def _match_is_real(name: str, m: re.Match) -> bool:
     if name == "Secret en dur":
         return not PLACEHOLDER_RE.match(m.group(1))
     return True
+
+
+def redact_text(text: str) -> tuple[str, list[str]]:
+    """Masque les secrets d'un texte libre. Renvoie (texte masqué, types détectés)."""
+    found: list[str] = []
+    for name, rx in PATTERNS:
+        if any(_match_is_real(name, m) for m in rx.finditer(text or "")):
+            found.append(name)
+            text = rx.sub(lambda m, n=name: REDACTED if _match_is_real(n, m) else m.group(0), text)
+    return text or "", found
+
+
+def redact_obj(obj):
+    """Masque récursivement les chaînes d'une structure JSON (garde-fou du journal d'événements)."""
+    if isinstance(obj, str):
+        return redact_text(obj)[0]
+    if isinstance(obj, list):
+        return [redact_obj(v) for v in obj]
+    if isinstance(obj, dict):
+        return {k: redact_obj(v) for k, v in obj.items()}
+    return obj
+
+
+def scan_pr_text(title: str, body: str) -> tuple[str, str, list[Finding]]:
+    """Titre et description de la PR : masqués avant le modèle, secret signalé comme bloquant."""
+    title, in_title = redact_text(title)
+    body, in_body = redact_text(body)
+    findings = [
+        Finding(path=PR_TEXT_PATH, line=None, severity="critical", category="secret",
+                title=f"{name} détecté(e) dans le {where} de la PR",
+                explanation=("Une valeur sensible apparaît dans le texte de la PR. Elle a été masquée "
+                             "avant l'analyse IA et n'est pas reproduite ici. Modifiez le texte de la PR "
+                             "et, si la valeur est réelle, révoquez-la."),
+                source="secret-scan", inline=False)
+        for where, names in (("titre", in_title), ("description", in_body)) for name in names
+    ]
+    return title, body, findings
 
 
 def scan_and_redact(files: list[FileDiff]) -> list[Finding]:

@@ -1,0 +1,99 @@
+  09:47:26 analyses terminées : 1/12
+  09:47:46 analyses terminées : 1/12
+  09:48:07 analyses terminées : 4/12
+  09:48:27 analyses terminées : 6/12
+  09:48:47 analyses terminées : 7/12
+  09:49:07 analyses terminées : 8/12
+  09:49:27 analyses terminées : 10/12
+  09:49:47 analyses terminées : 11/12
+  09:50:07 analyses terminées : 12/12
+# Banc vrai GitHub — série `r2`
+
+Généré le 2026-11-11T09:50:40 UTC · 12 PR ouvertes en 3.6 s sur 3 dépôts · 3 worker(s)
+
+## Synthèse
+
+- Verdicts conformes : **12/12**
+- Défauts attendus détectés : **8/8**
+- PR propres sans remarque majeure ou critique : **3/3**
+- Check GitHub conforme au verdict : **12/12**
+- Email d'alerte conforme (envoyé si et seulement si bloquante) : **12/12**
+- Secrets des cas retrouvés dans le journal de l'agent : **0**
+- Durée totale (attente comprise) : p50 **67.7 s**, p95 **141.8 s**, max 160.3 s
+- Attente en file : p50 35.1 s, p95 106.5 s · exécution : p50 32.3 s, p95 60.2 s
+- Lots en échec : 0 / 11
+
+## Par PR
+
+| Cas | PR | Verdict | Attendu | Détection | Autres remarques | Check | Mail | Attente | Total |
+|---|---|---|---|---|---|---|---|---:|---:|
+| `D1-sql-injection` | [project_test_1#6](https://github.com/test-agent-revue/project_test_1/pull/6) | ✅ A_VERIFIER | A_VERIFIER / BLOQUANTE | ✅ injection SQL (concaténation) | — | neutral | non | 0.0 s | 38.4 s |
+| `D2-acces-suppression` | [project_test_1#8](https://github.com/test-agent-revue/project_test_1/pull/8) | ✅ A_VERIFIER | A_VERIFIER / BLOQUANTE | ✅ route de suppression sans contrôle de droits | critical, major | neutral | non | 94.0 s | 126.6 s |
+| `D3-dump-oublie` | [project_test_2#8](https://github.com/test-agent-revue/project_test_2/pull/8) | ✅ A_VERIFIER | A_VERIFIER / BLOQUANTE | ✅ dump() oublié | — | neutral | non | 46.8 s | 76.6 s |
+| `D4-secret-en-dur` | [project_test_2#7](https://github.com/test-agent-revue/project_test_2/pull/7) | ✅ BLOQUANTE | BLOQUANTE | ✅ clé d'API en dur (détection déterministe) | major, major | failure | oui | 121.9 s | 160.3 s |
+| `D5-montant-flottant` | [project_test_3#5](https://github.com/test-agent-revue/project_test_3/pull/5) | ✅ A_VERIFIER | A_VERIFIER / BLOQUANTE | ✅ flottant + troncature au lieu d'arrondi | — | neutral | non | 0.5 s | 32.6 s |
+| `D6-reference-dupliquee` | [project_test_3#8](https://github.com/test-agent-revue/project_test_3/pull/8) | ✅ A_VERIFIER | A_VERIFIER / BLOQUANTE | ✅ référence suivante non incrémentée (doublon) | — | neutral | non | 32.3 s | 58.9 s |
+| `D7-xss-raw` | [project_test_1#9](https://github.com/test-agent-revue/project_test_1/pull/9) | ✅ A_VERIFIER | A_VERIFIER / BLOQUANTE | ✅ |raw sur une donnée saisie (XSS) | — | neutral | non | 29.3 s | 47.1 s |
+| `D8-secret-description` | [project_test_3#6](https://github.com/test-agent-revue/project_test_3/pull/6) | ✅ BLOQUANTE | BLOQUANTE | ✅ mot de passe dans la description de la PR | minor | failure | oui | 4.2 s | 29.4 s |
+| `C1-export-csv` | [project_test_2#6](https://github.com/test-agent-revue/project_test_2/pull/6) | ✅ CONTROLES_SATISFAITS | CONTROLES_SATISFAITS / A_VERIFIER | — | — | success | non | 76.6 s | 122.1 s |
+| `C2-liste-pluriel` | [project_test_3#7](https://github.com/test-agent-revue/project_test_3/pull/7) | ✅ CONTROLES_SATISFAITS | CONTROLES_SATISFAITS / A_VERIFIER | — | — | success | non | 37.9 s | 94.1 s |
+| `C3-filtre-twig-money` | [project_test_1#7](https://github.com/test-agent-revue/project_test_1/pull/7) | ✅ CONTROLES_SATISFAITS | CONTROLES_SATISFAITS / A_VERIFIER | — | — | success | non | 58.6 s | 123.7 s |
+| `E1-gros-fichier` | [project_test_2#5](https://github.com/test-agent-revue/project_test_2/pull/5) | ✅ ANALYSE_INCOMPLETE | ANALYSE_INCOMPLETE | — | — | action_required | non | 0.5 s | 4.8 s |
+
+## Remarques retenues
+
+### `D1-sql-injection` — A_VERIFIER
+- **critical** `src/Repository/ContractRepository.php:79` — Injection SQL potentielle par concaténation de variable utilisateur
+- écartées par la validation : 0 · commentaires en ligne publiés : 1
+
+### `D2-acces-suppression` — A_VERIFIER
+- **critical** `src/Controller/ContractController.php:108` — Aucune vérification des droits avant suppression
+- **critical** `templates/contract/show.html.twig:24` — Manque de token CSRF dans le formulaire de suppression
+- **major** `src/Controller/ContractController.php:110` — Aucune vérification de l'existence du contrat
+- écartées par la validation : 0 · commentaires en ligne publiés : 3
+
+### `D3-dump-oublie` — A_VERIFIER
+- **major** `src/Controller/ContractController.php:55` — Debug dump oublié en production
+- écartées par la validation : 0 · commentaires en ligne publiés : 1
+
+### `D4-secret-en-dur` — BLOQUANTE
+- **major** `src/Service/CrmNotifier.php:12` — URL du CRM harcodée
+- **major** `src/Service/CrmNotifier.php:19` — Aucun test pour la logique métier
+- **critical** `src/Service/CrmNotifier.php:13` — Secret en dur détecté(e) dans le code _(source : secret-scan)_
+- écartées par la validation : 1 · commentaires en ligne publiés : 3
+
+### `D5-montant-flottant` — A_VERIFIER
+- **major** `src/Service/PremiumCalculator.php:24` — Calcul de prime : perte de précision avec les flottants
+- écartées par la validation : 0 · commentaires en ligne publiés : 1
+
+### `D6-reference-dupliquee` — A_VERIFIER
+- **major** `src/Repository/ContractRepository.php:83` — Suppression de l'incrémentation du numéro de référence
+- écartées par la validation : 0 · commentaires en ligne publiés : 1
+
+### `D7-xss-raw` — A_VERIFIER
+- **critical** `templates/contract/show.html.twig:12` — Risque XSS par utilisation de |raw sur donnée utilisateur
+- écartées par la validation : 0 · commentaires en ligne publiés : 1
+
+### `D8-secret-description` — BLOQUANTE
+- **minor** `templates/contract/show.html.twig:13` — Texte de libellé amélioré pour plus de clarté
+- **critical** `(titre / description de la PR):None` — Secret en dur détecté(e) dans le description de la PR _(source : secret-scan)_
+- écartées par la validation : 0 · commentaires en ligne publiés : 1
+
+### `C1-export-csv` — CONTROLES_SATISFAITS
+- aucune
+- écartées par la validation : 0 · commentaires en ligne publiés : 0
+
+### `C2-liste-pluriel` — CONTROLES_SATISFAITS
+- aucune
+- écartées par la validation : 0 · commentaires en ligne publiés : 0
+
+### `C3-filtre-twig-money` — CONTROLES_SATISFAITS
+- aucune
+- écartées par la validation : 0 · commentaires en ligne publiés : 0
+
+### `E1-gros-fichier` — ANALYSE_INCOMPLETE
+- Incomplet : `tests/fixtures/portefeuille_2025.csv` non analysé : diff non fourni par GitHub (6001 lignes modifiées)
+- aucune
+- écartées par la validation : 0 · commentaires en ligne publiés : 0
+
+

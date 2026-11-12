@@ -7,7 +7,7 @@ Deux niveaux de déduplication :
                         même commit ne déclenchent qu'une analyse.
 """
 import json
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 import redis.asyncio as redis
 
@@ -30,14 +30,22 @@ class JobQueue:
     async def ping(self) -> bool:
         return bool(await self.redis.ping())
 
-    async def enqueue(self, job: dict[str, Any]) -> bool:
-        """Met le job en file. Renvoie False si c'est un doublon."""
+    async def enqueue(self, job: dict[str, Any],
+                      before_push: Callable[[], Awaitable[None]] | None = None) -> bool:
+        """Met le job en file. Renvoie False si c'est un doublon.
+
+        `before_push` (création du run dans le journal) s'exécute après la
+        déduplication et avant la mise en file : le worker ne peut pas
+        dépiler un job dont le run n'existe pas encore.
+        """
         ttl = settings.DEDUP_TTL_SECONDS
         if not await self.redis.set(f"prreview:delivery:{job['delivery_id']}", 1, nx=True, ex=ttl):
             return False
         sha_key = f"prreview:sha:{job['repo']}#{job['pr_number']}@{job['head_sha']}"
         if not await self.redis.set(sha_key, 1, nx=True, ex=ttl):
             return False
+        if before_push is not None:
+            await before_push()
         await self.redis.lpush(settings.QUEUE_KEY, json.dumps(job))
         return True
 
@@ -49,3 +57,11 @@ class JobQueue:
 
     async def dead_letter(self, job: dict[str, Any], error: str) -> None:
         await self.redis.lpush(settings.DLQ_KEY, json.dumps({**job, "error": error}))
+
+    async def dlq_size(self) -> int:
+        return int(await self.redis.llen(settings.DLQ_KEY))
+
+    async def forget_commits(self, repo: str) -> int:
+        """Efface les clés de déduplication par commit d'un dépôt (mode démo uniquement)."""
+        keys = [k async for k in self.redis.scan_iter(match=f"prreview:sha:{repo}#*")]
+        return await self.redis.delete(*keys) if keys else 0

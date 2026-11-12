@@ -1,0 +1,15 @@
+# Jamais dans l'image : secrets, environnement local, dépendances de dev.
+.env
+.env.*
+!.env.example
+secrets/
+e2e/.keys/
+*.pem
+.git/
+.venv/
+data/
+docs/
+**/__pycache__/
+.pytest_cache/
+ui/frontend/node_modules/
+ui/dist/
