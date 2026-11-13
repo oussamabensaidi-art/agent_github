@@ -27,6 +27,12 @@ def _cut(text: str) -> str:
     return text if len(text) <= MAX_TEXT else text[:MAX_TEXT] + "\n\n… (tronqué)"
 
 
+def _status_description(text: str) -> str:
+    """Description d'un statut de commit : GitHub refuse les caractères de 4 octets
+    (422 « Description doesn't accept 4-byte Unicode », ex. 🔴 🟠 🟢) et coupe à 140."""
+    return " ".join("".join(ch for ch in text if ord(ch) <= 0xFFFF).split())[:140]
+
+
 class GitHubAppAuth:
     """JWT de l'App → jeton d'installation (1 h), mis en cache."""
 
@@ -151,7 +157,7 @@ class GitHubClient:
             await self._req("PATCH", f"/repos/{repo}/check-runs/{check_id}", json=body)
             return
         # Statut de commit : seul « contrôles satisfaits » est vert (pas d'état neutre).
-        body = {"state": STATUS_STATE[outcome], "context": name, "description": title[:140]}
+        body = {"state": STATUS_STATE[outcome], "context": name, "description": _status_description(title)}
         if details_url:
             body["target_url"] = details_url
         await self._req("POST", f"/repos/{repo}/statuses/{sha}", json=body)

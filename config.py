@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     QWEN3_API_KEY: str = ""
     QWEN3_MAX_TOKENS: int = 6144
     QWEN3_MAX_THINKING_TOKENS: int = 3072
+    # Champ "model" envoyé à la passerelle (ex. Qwen3-14B-AWQ) ; vide = non envoyé.
+    QWEN3_MODEL: str = ""
+    # chat_template_kwargs.enable_thinking ; vide = non envoyé (comportement par défaut du serveur).
+    QWEN3_ENABLE_THINKING: bool | None = None
     # Fenêtre de contexte du modèle servi (vLLM max_model_len) : prompt + réponse.
     QWEN3_CONTEXT_TOKENS: int = 8192
     # OpenRouter : banc de test uniquement (service externe, jamais de code réel)

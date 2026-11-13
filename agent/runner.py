@@ -48,7 +48,9 @@ def build_llm(settings):
         return Qwen3ApiClient(settings.QWEN3_API_URL, settings.QWEN3_ENDPOINT, settings.QWEN3_API_KEY,
                               settings.llm_allowed_hosts, settings.LLM_TIMEOUT_SECONDS,
                               settings.QWEN3_MAX_TOKENS, settings.QWEN3_MAX_THINKING_TOKENS,
-                              context_tokens=settings.QWEN3_CONTEXT_TOKENS)
+                              context_tokens=settings.QWEN3_CONTEXT_TOKENS,
+                              model_name=settings.QWEN3_MODEL,
+                              enable_thinking=settings.QWEN3_ENABLE_THINKING)
     return OllamaClient(settings.LLM_BASE_URL, settings.LLM_MODEL, settings.llm_allowed_hosts,
                         settings.LLM_TIMEOUT_SECONDS, settings.LLM_NUM_CTX)
 
