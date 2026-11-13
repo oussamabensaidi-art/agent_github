@@ -41,6 +41,24 @@ async def test_qwen3_client_both_endpoints(endpoint, response):
     assert ("max_thinking_tokens" in seen["body"]) == (endpoint == "think")
 
 
+async def test_qwen3_sends_model_and_disables_thinking_when_configured():
+    seen = {}
+
+    def handler(request: httpx.Request):
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"response": json.dumps({"findings": [FINDING]})})
+
+    llm = Qwen3ApiClient("http://llm.internal:8085", "think", "k", ["llm.internal"],
+                         transport=httpx.MockTransport(handler),
+                         model_name="Qwen3-14B-AWQ", enable_thinking=False)
+    await llm.review("sys", "user")
+    body = seen["body"]
+    assert body["model"] == "Qwen3-14B-AWQ"
+    assert body["chat_template_kwargs"] == {"enable_thinking": False}
+    assert body["temperature"] == 0.1
+    assert "max_thinking_tokens" not in body   # raisonnement coupé : pas de budget de réflexion
+
+
 async def test_qwen3_max_tokens_fits_the_context_window():
     seen = []
 
@@ -162,6 +180,22 @@ async def test_status_mode_maps_a_verifier_to_failure():
     await gh.finish_status("o/r", "abc", "ctx", None, "A_VERIFIER", "À vérifier", "s")
     await gh.aclose()
     assert calls[0][0] == "/repos/o/r/statuses/abc" and calls[0][1]["state"] == "failure"
+
+
+async def test_status_description_drops_4_byte_emoji_refused_by_github():
+    calls = []
+
+    def handler(request: httpx.Request):
+        calls.append(json.loads(request.content))
+        return httpx.Response(201, json={})
+
+    gh = GitHubClient("tok", "https://api.github.com", use_checks=False, transport=httpx.MockTransport(handler))
+    await gh.finish_status("o/r", "abc", "ctx", None, "BLOQUANTE", "🔴 Bloquante — 2 remarque(s)", "s")
+    await gh.finish_status("o/r", "abc", "ctx", None, "ANALYSE_INCOMPLETE", "⚪ Analyse incomplète — " + "x" * 200, "s")
+    await gh.aclose()
+    assert calls[0]["description"] == "Bloquante — 2 remarque(s)"
+    assert all(ord(ch) <= 0xFFFF for ch in calls[0]["description"])
+    assert calls[1]["description"].startswith("⚪ Analyse incomplète") and len(calls[1]["description"]) == 140
 
 
 async def test_revoked_installation_token_is_refreshed_once():

@@ -1,0 +1,59 @@
+# Test contre le VRAI GitHub sur les dépôts de l'organisation de test calipso-revue-test
+# (todo-list, gestion-contrats) — DEV LOCAL UNIQUEMENT. API Qwen3 Calipso, relais smee, Mailpit.
+#   Mode jeton : docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.todo.yml up -d --build
+#   Mode App   : ajouter -f docker-compose.todo-app.yml (voir ce fichier).
+#
+# Dans .env : SMEE_URL, GITHUB_WEBHOOK_SECRET, QWEN3_API_KEY ; en mode jeton, GITHUB_TOKEN (jeton classique
+# scope repo : un jeton fine-grained ne lit pas les check runs de la CI).
+#  - smee    : relais smee.io → api (GitHub ne peut pas joindre localhost) ; signature HMAC vérifiée par l'api.
+#  - mailpit : les alertes « bloquante » arrivent sur http://localhost:8025, aucune vraie boîte.
+services:
+  api:
+    environment:
+      GITHUB_AUTH_MODE: token
+      UI_PUBLIC_URL: http://localhost:8020/ui
+
+  worker:
+    environment:
+      GITHUB_AUTH_MODE: token
+      DRY_RUN: "false"
+      # API LLM Calipso (Qwen3-14B-AWQ). La clé vient de QWEN3_API_KEY dans .env (en-tête x-api-key).
+      # En HTTP sur IP publique : acceptable pour ce dépôt de code fictif, PAS pour du code Calipso réel.
+      LLM_PROVIDER: qwen3api
+      QWEN3_API_URL: http://188.40.58.26:8085
+      QWEN3_ENDPOINT: think
+      QWEN3_MODEL: Qwen3-14B-AWQ
+      QWEN3_ENABLE_THINKING: "false"
+      QWEN3_CONTEXT_TOKENS: "8192"
+      CHUNK_MAX_CHARS: "8000"
+      LLM_ALLOWED_HOSTS: localhost,127.0.0.1,ollama,host.docker.internal,188.40.58.26
+      LLM_TIMEOUT_SECONDS: "900"
+      CHECKS_ENABLED: "true"
+      # Lecture de la CI : jeton classique (scope repo) ou mode App. Avec un jeton fine-grained,
+      # les check runs sont refusés (403 checks=read) : passer à "false".
+      CI_ENABLED: "true"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_STARTTLS: "false"
+      SMTP_USER: ""
+      ALERT_EMAILS: lead-dev@calipso.test
+      UI_PUBLIC_URL: http://localhost:8020/ui
+    depends_on: [mailpit]
+
+  smee:
+    image: node:22-alpine
+    command: ["npx", "--yes", "smee-client@5.0.0",
+              "--url", "${SMEE_URL:?SMEE_URL manquant dans .env}",
+              "--target", "http://api:8020/webhook/github"]
+    depends_on: [api]
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+
+# Le mode jeton n'utilise pas la clé de l'App : on réutilise la clé de test du banc e2e.
+secrets:
+  github_app.pem:
+    file: ./e2e/.keys/app.pem
