@@ -411,4 +411,6 @@ STATIC_CASES: list[dict] = [
     },
 ]
 
-ALL_CASES = CASES + STATIC_CASES
+from cases_extra import EXTRA_CASES  # noqa: E402
+
+ALL_CASES = CASES + STATIC_CASES + EXTRA_CASES

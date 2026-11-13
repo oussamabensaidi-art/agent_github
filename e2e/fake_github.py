@@ -106,6 +106,33 @@ async def update_check(owner: str, name: str, check_id: int, request: Request,
     return {"id": check_id}
 
 
+@app.get("/repos/{owner}/{name}/contents/{path:path}")
+async def contents(owner: str, name: str, path: str, authorization: str | None = Header(None)):
+    """Lecture seule autorisée (contexte de revue) : le dépôt fictif n'a pas ces fichiers."""
+    auth(authorization)
+    raise HTTPException(404, "Not Found")
+
+
+@app.put("/repos/{owner}/{name}/pulls/{number}/reviews/{review_id}")
+async def update_review(owner: str, name: str, number: int, review_id: int, request: Request,
+                        authorization: str | None = Header(None)):
+    auth(authorization)
+    RECORDED.append({"op": "review_update", "pr": number, "id": review_id, **(await request.json())})
+    return {"id": review_id}
+
+
+@app.get("/repos/{owner}/{name}/pulls/{number}/reviews")
+async def list_reviews(owner: str, name: str, number: int, authorization: str | None = Header(None)):
+    auth(authorization)
+    return []
+
+
+@app.get("/repos/{owner}/{name}/pulls/{number}/comments")
+async def list_review_comments(owner: str, name: str, number: int, authorization: str | None = Header(None)):
+    auth(authorization)
+    return []
+
+
 @app.post("/repos/{owner}/{name}/pulls/{number}/reviews")
 async def create_review(owner: str, name: str, number: int, request: Request,
                         authorization: str | None = Header(None)):

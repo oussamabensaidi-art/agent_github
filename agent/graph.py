@@ -1,19 +1,19 @@
 """StateGraph LangGraph — agent de revue des PR.
 
-fetch_pr → load_diff → scan_secrets ─┬─ ai_review ──────┬─ decide → publish → alert → audit
-                                     └─ static_checks ──┘
+fetch_pr → load_diff → scan_secrets → load_context ─┬─ ai_review ──────┬─ decide → publish → alert → audit
+                                                    └─ static_checks ──┘
 Les deux branches s'exécutent en parallèle ; `decide` attend les deux.
 Toute erreur → fail (statut neutre + audit). PR obsolète (nouveau push) → audit.
 `static_checks` ne lève jamais d'erreur : une panne rend l'analyse incomplète.
 
-Semaines 5-6 : un nœud load_context (code lié, règles du dépôt) avant ai_review.
+load_context : règles du dépôt (branche de base) et en-têtes des fichiers modifiés.
 """
 from langgraph.graph import END, StateGraph
 
 from agent import nodes
 from agent.state import ReviewState
 
-BEFORE = ["fetch_pr", "load_diff", "scan_secrets"]
+BEFORE = ["fetch_pr", "load_diff", "scan_secrets", "load_context"]
 PARALLEL = ["ai_review", "static_checks"]
 AFTER = ["decide", "publish", "alert"]
 PIPELINE = BEFORE + PARALLEL + AFTER

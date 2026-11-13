@@ -72,6 +72,12 @@ VERDICT_RULES_VERSION = "verdict-v3"  # v3 : contrôles statiques et CI comme so
 PR_TEXT_PATH = "(titre / description de la PR)"
 
 MARKER = "<!-- calipso-pr-review -->"
+SUPERSEDED_MARK = "<!-- calipso-pr-review:remplacee -->"
+
+
+def superseded_body(old_sha: str, new_sha: str) -> str:
+    return (f"{MARKER}\n{SUPERSEDED_MARK}\n_Revue automatique du commit `{old_sha[:7]}` remplacée par "
+            f"celle du commit `{new_sha[:7]}`._")
 
 CHECK_LABEL = {"gitleaks": "gitleaks (secrets)", "composer-audit": "composer audit (dépendances)",
                "phpstan": "PHPStan (analyse statique)", "php-cs-fixer": "PHP-CS-Fixer (style)",

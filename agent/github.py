@@ -104,6 +104,17 @@ class GitHubClient:
                 return files
             page += 1
 
+    async def get_file(self, repo: str, path: str, ref: str, max_bytes: int = 200_000) -> str | None:
+        """Contenu texte d'un fichier à une révision donnée ; None s'il n'existe pas ou est trop gros."""
+        try:
+            resp = await self._req("GET", f"/repos/{repo}/contents/{path}", params={"ref": ref},
+                                   headers={"Accept": "application/vnd.github.raw+json"})
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in (403, 404):
+                return None
+            raise
+        return resp.text if len(resp.content) <= max_bytes else None
+
     async def download_tarball(self, repo: str, sha: str, max_bytes: int) -> bytes:
         """Archive tar.gz du dépôt au commit donné (redirection vers codeload.github.com)."""
         async with self._http.stream("GET", f"/repos/{repo}/tarball/{sha}", follow_redirects=True) as resp:
@@ -155,6 +166,25 @@ class GitHubClient:
         if details_url:
             body["target_url"] = details_url
         await self._req("POST", f"/repos/{repo}/statuses/{sha}", json=body)
+
+    async def _pages(self, url: str, max_pages: int = 5) -> list[dict]:
+        out: list[dict] = []
+        for page in range(1, max_pages + 1):
+            batch = (await self._req("GET", url, params={"per_page": 100, "page": page})).json()
+            out += batch
+            if len(batch) < 100:
+                break
+        return out
+
+    async def list_reviews(self, repo: str, number: int) -> list[dict]:
+        return await self._pages(f"/repos/{repo}/pulls/{number}/reviews")
+
+    async def list_review_comments(self, repo: str, number: int) -> list[dict]:
+        return await self._pages(f"/repos/{repo}/pulls/{number}/comments")
+
+    async def update_review(self, repo: str, number: int, review_id: int, body: str) -> None:
+        """Remplace le texte de synthèse d'une revue déjà publiée (les commentaires en ligne restent)."""
+        await self._req("PUT", f"/repos/{repo}/pulls/{number}/reviews/{review_id}", json={"body": _cut(body)})
 
     async def create_review(self, repo: str, number: int, sha: str, body: str,
                             comments: list[dict], fallback_body: str) -> dict:

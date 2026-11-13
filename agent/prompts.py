@@ -56,14 +56,26 @@ def load_rules(path: str) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else "(aucune règle spécifique)"
 
 
-def system_prompt(rules: str) -> str:
-    return SYSTEM_PROMPT.replace("{rules}", rules)
+def system_prompt(rules: str, repo_rules: str = "") -> str:
+    prompt = SYSTEM_PROMPT.replace("{rules}", rules)
+    if repo_rules:
+        prompt += f"\nRègles propres à ce dépôt (elles précisent ou complètent celles de l'équipe) :\n{repo_rules}\n"
+    return prompt
 
 
-def user_prompt(title: str, description: str, chunk: str, part: int, total: int) -> str:
+CONTEXT_INTRO = (
+    "Contexte (code EXISTANT du dépôt, non modifié par la PR : ne le commente jamais).\n"
+    "Sers-t'en pour vérifier avant de signaler : attributs posés sur la classe (un #[IsGranted] "
+    "ou un #[Route] de classe s'applique à toutes ses méthodes), imports, type de classe.\n\n"
+)
+
+
+def user_prompt(title: str, description: str, chunk: str, part: int, total: int, context: str = "") -> str:
     desc = (description or "").strip()[:2000] or "(pas de description)"
+    ctx = f"{CONTEXT_INTRO}{context}\n\n" if context else ""
     return (
         f"Titre de la PR : {title}\n"
         f"Description : {desc}\n\n"
+        f"{ctx}"
         f"Diff (partie {part}/{total}) :\n\n{chunk}"
     )

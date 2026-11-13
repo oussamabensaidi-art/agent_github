@@ -70,6 +70,9 @@ CREATE TABLE IF NOT EXISTS settings_history (
   id BIGSERIAL PRIMARY KEY, key TEXT NOT NULL, value JSONB NOT NULL, updated_by TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS deferred_checks (
+  id BIGSERIAL PRIMARY KEY, payload JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 """
 
 FINAL_STATUSES = ("ok", "stale", "superseded", "error")
@@ -102,6 +105,11 @@ class NullStore:
     async def set_publishing(self, enabled: bool, by: str) -> None:
         self.default_publishing = enabled
 
+    # Clôtures de check mises de côté pendant que la publication est coupée.
+    async def defer_check(self, payload: dict) -> None: ...
+    async def take_deferred_checks(self) -> list[dict]:
+        return []
+
 
 class MemoryStore(NullStore):
     """Pour les tests : garde tout en mémoire, avec le même masquage que Postgres."""
@@ -113,6 +121,14 @@ class MemoryStore(NullStore):
         self.runs: dict[str, dict] = {}
         self.events: list[dict] = []
         self.history: list[dict] = []
+        self.deferred: list[dict] = []
+
+    async def defer_check(self, payload: dict) -> None:
+        self.deferred.append(redact_obj(payload))
+
+    async def take_deferred_checks(self) -> list[dict]:
+        out, self.deferred = self.deferred, []
+        return out
 
     async def create_run(self, job: dict, demo: bool = False) -> None:
         self.runs[job["run_id"]] = {"status": "queued", "demo": demo, **redact_obj(job)}
@@ -281,6 +297,17 @@ class PgStore(NullStore):
                 await conn.execute("INSERT INTO settings_history (key, value, updated_by) "
                                    "VALUES ('publishing_enabled', %s, %s)", (Jsonb(enabled), by))
         self._publishing_cache = enabled
+
+    async def defer_check(self, payload: dict) -> None:
+        from psycopg.types.json import Jsonb
+        async with self.pool.connection() as conn:
+            await conn.execute("INSERT INTO deferred_checks (payload) VALUES (%s)", (Jsonb(redact_obj(payload)),))
+
+    async def take_deferred_checks(self) -> list[dict]:
+        """Retire et renvoie les clôtures en attente (atomique : un seul worker les obtient)."""
+        async with self.pool.connection() as conn:
+            cur = await conn.execute("DELETE FROM deferred_checks RETURNING payload")
+            return [r["payload"] for r in await cur.fetchall()]
 
     async def publishing_history(self, limit: int = 20) -> list[dict]:
         async with self.pool.connection() as conn:

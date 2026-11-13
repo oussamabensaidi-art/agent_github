@@ -24,6 +24,16 @@ class FakeGitHub:
         ]
         self.head, self.fail_files = head, fail_files
         self.reviews, self.statuses = [], []
+        self.existing_reviews, self.existing_comments, self.updated_reviews = [], [], []
+
+    async def list_reviews(self, repo, number):
+        return self.existing_reviews
+
+    async def list_review_comments(self, repo, number):
+        return self.existing_comments
+
+    async def update_review(self, repo, number, review_id, body):
+        self.updated_reviews.append((review_id, body))
 
     async def get_pr(self, repo, number):
         return {"head": {"sha": self.head}, "state": "open", "title": "Ajout repo",

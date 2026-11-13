@@ -1,0 +1,144 @@
+{
+  "tag": "r3",
+  "cases": {
+    "D1-sql-injection": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/r3/D1-sql-injection",
+      "sha": "fec4d32985fb30676bb959c600988b79226b773f",
+      "pr": 16,
+      "opened_at": 1794565962.0157764,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/16"
+    },
+    "D2-acces-suppression": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/r3/D2-acces-suppression",
+      "sha": "cc777b7307e31f5674a7f7ad89d23dfe045ed62e",
+      "pr": 14,
+      "opened_at": 1794565961.9421973,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/14"
+    },
+    "D3-dump-oublie": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/r3/D3-dump-oublie",
+      "sha": "3d0c3f02fdf62d3ab06bc7a760874f497f079e26",
+      "pr": 16,
+      "opened_at": 1794565962.1149335,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/16"
+    },
+    "D4-secret-en-dur": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/r3/D4-secret-en-dur",
+      "sha": "a372d490decd8e8374ac79090177a55b9cbb642f",
+      "pr": 11,
+      "opened_at": 1794565962.1414244,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/11"
+    },
+    "D5-montant-flottant": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/r3/D5-montant-flottant",
+      "sha": "6f7f163ca63c9d54905ac72a8fe5455265905e3c",
+      "pr": 14,
+      "opened_at": 1794565962.4176636,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/14"
+    },
+    "D6-reference-dupliquee": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/r3/D6-reference-dupliquee",
+      "sha": "5a22a0d3d803f8f445b055c7f378dd7df0a8819c",
+      "pr": 12,
+      "opened_at": 1794565962.1364422,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/12"
+    },
+    "D7-xss-raw": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/r3/D7-xss-raw",
+      "sha": "8fbcd459239a56c808cf97a0238d64a607f7a32f",
+      "pr": 15,
+      "opened_at": 1794565962.056771,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/15"
+    },
+    "D8-secret-description": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/r3/D8-secret-description",
+      "sha": "83856d53b7803774da716d6e1ba396c3a2a44d5f",
+      "pr": 13,
+      "opened_at": 1794565962.136523,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/13"
+    },
+    "C1-export-csv": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/r3/C1-export-csv",
+      "sha": "6a73b457febdefefb9fb3bffbf7ca8247210aad3",
+      "pr": 15,
+      "opened_at": 1794565961.9746945,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/15"
+    },
+    "C2-liste-pluriel": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/r3/C2-liste-pluriel",
+      "sha": "dbb83c6fdbb92c148b1d4381c991d0100c1cc2d5",
+      "pr": 11,
+      "opened_at": 1794565962.047121,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/11"
+    },
+    "C3-filtre-twig-money": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/r3/C3-filtre-twig-money",
+      "sha": "88b262c6a9d1a0af25b135f6728e849d1bc3b650",
+      "pr": 13,
+      "opened_at": 1794565961.7869778,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/13"
+    },
+    "E1-gros-fichier": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/r3/E1-gros-fichier",
+      "sha": "b1336cf016bc001feacb1d7d33961764c5bde1c6",
+      "pr": 12,
+      "opened_at": 1794565961.7830393,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/12"
+    },
+    "S1-phpstan-methode": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/r3/S1-phpstan-methode",
+      "sha": "ead621a3bfae8a3c3a4410e437bb6a01ce803262",
+      "pr": 18,
+      "opened_at": 1794565962.5748622,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/18"
+    },
+    "S2-ci-en-echec": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/r3/S2-ci-en-echec",
+      "sha": "0fd411da2d1c4524895de6aa96603c58747f8fd8",
+      "pr": 13,
+      "opened_at": 1794565961.9746428,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/13"
+    },
+    "S3-dependance-vulnerable": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/r3/S3-dependance-vulnerable",
+      "sha": "dea556a605c21fa7a081fc6425a64fc128d1f99d",
+      "pr": 10,
+      "opened_at": 1794565961.9038107,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/10"
+    },
+    "S4-style": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/r3/S4-style",
+      "sha": "b1222602d12e2874729f25346c18d09a572406b0",
+      "pr": 17,
+      "opened_at": 1794565962.107914,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/17"
+    },
+    "S5-propre-php": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/r3/S5-propre-php",
+      "sha": "a90572536c2c3523c966a978ece5223e33c4d9df",
+      "pr": 14,
+      "opened_at": 1794565962.1807969,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/14"
+    }
+  },
+  "launched_at": 1794565958.1402113,
+  "launch_spread_s": 4.4,
+  "workers": 3
+}

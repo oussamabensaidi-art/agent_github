@@ -14,9 +14,12 @@ services:
   worker:
     environment:
       DRY_RUN: "false"
-      LLM_PROVIDER: qwen3api
+      # Banc de comparaison des modèles (code fictif uniquement) : BENCH_LLM_PROVIDER=openrouter,
+      # BENCH_OPENROUTER_MODEL=..., et openrouter.ai ajouté à BENCH_LLM_ALLOWED_HOSTS.
+      LLM_PROVIDER: ${BENCH_LLM_PROVIDER:-qwen3api}
+      OPENROUTER_MODEL: ${BENCH_OPENROUTER_MODEL:-}
       QWEN3_ENDPOINT: chat
-      LLM_ALLOWED_HOSTS: localhost,127.0.0.1,ollama,host.docker.internal,188.40.58.26
+      LLM_ALLOWED_HOSTS: ${BENCH_LLM_ALLOWED_HOSTS:-localhost,127.0.0.1,ollama,host.docker.internal,188.40.58.26}
       LLM_TIMEOUT_SECONDS: "900"
       # Fenêtre Qwen3 Calipso = 8192 jetons (prompt + réponse) : lots plus petits
       # pour laisser ~4000 jetons de réponse (le modèle raisonne avant le JSON).

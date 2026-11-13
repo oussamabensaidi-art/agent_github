@@ -5,7 +5,7 @@ import type { ExcerptLine, Finding, RunEvent, Severity, Verdict } from "./types"
 // Vue d'une analyse reconstruite événement par événement : la même pour le direct et la relecture.
 
 export type NodeStatus = "idle" | "running" | "ok" | "error" | "stale" | "skipped";
-export const PIPELINE = ["fetch_pr", "load_diff", "scan_secrets", "ai_review", "static_checks", "decide", "publish", "alert", "audit"];
+export const PIPELINE = ["fetch_pr", "load_diff", "scan_secrets", "load_context", "ai_review", "static_checks", "decide", "publish", "alert", "audit"];
 
 export interface NodeView { status: NodeStatus; started?: number; finished?: number; duration?: number }
 export interface ChunkView {

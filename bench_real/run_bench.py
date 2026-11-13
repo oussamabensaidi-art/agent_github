@@ -92,7 +92,7 @@ def apply_changes(path: Path, changes: list[tuple]) -> None:
 
 
 def suite_cases(suite: str) -> list[dict]:
-    return [c for c in ALL_CASES if c.get("suite", "base") == suite]
+    return [c for c in ALL_CASES if suite == "all" or c.get("suite", "base") == suite]
 
 
 CASES: list[dict] = suite_cases("base")
@@ -199,7 +199,9 @@ def score(case: dict, run: dict | None, findings: list[dict], check: dict | None
     exp = case["expect"]
     verdict = run.get("verdict") if run else None
     kept = [f for f in findings if f["kept"]]
-    found = [{"label": e["label"], "found": any(matches(e, f) for f in kept)} for e in exp["find"]]
+    found = [{"label": e["label"], "found": any(matches(e, f) for f in kept),
+              "by": sorted({f.get("source") or "llm" for f in kept if matches(e, f)}),
+              "ai_expected": "source" not in e} for e in exp["find"]]
     expected_ids = {id(f) for e in exp["find"] for f in kept if matches(e, f)}
     other = [f for f in kept if id(f) not in expected_ids]
     return {
@@ -208,7 +210,8 @@ def score(case: dict, run: dict | None, findings: list[dict], check: dict | None
         "verdict": verdict, "verdict_ok": verdict in exp["verdicts"], "expected_verdicts": exp["verdicts"],
         "found": found,
         "kept": [{k: f[k] for k in ("severity", "path", "line", "title", "source")} for f in kept],
-        "other_findings": [{k: f[k] for k in ("severity", "path", "line", "title")} for f in other],
+        "other_findings": [{k: f[k] for k in ("severity", "path", "line", "title", "source", "explanation")}
+                           for f in other],
         "noise_major": sum(1 for f in other if SEVERITY_RANK.get(f["severity"], 0) >= 2),
         "dropped": sum(1 for f in findings if not f["kept"]),
         "check": check and {"conclusion": check["conclusion"], "title": check["output"]["title"],
@@ -216,6 +219,7 @@ def score(case: dict, run: dict | None, findings: list[dict], check: dict | None
         "check_ok": bool(check) and verdict in CONCLUSION and check["conclusion"] == CONCLUSION[verdict],
         "review_state": review and review["state"], "inline_comments": inline,
         "mail_sent": mailed, "mail_ok": mailed == (verdict == "BLOQUANTE"),
+        "cost_usd": run and run.get("cost_usd"), "model": run and run.get("model"),
         "queue_ms": run and run.get("queue_ms"), "run_ms": run and run.get("run_ms"),
         "total_ms": run and run.get("total_ms"),
         "chunks": run and run.get("chunks_total"), "chunks_failed": run and run.get("chunks_failed"),
@@ -337,7 +341,7 @@ def main() -> None:
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--timeout", type=int, default=2400)
     ap.add_argument("--workers", type=int, help="nombre de workers (noté dans le rapport)")
-    ap.add_argument("--suite", default="base", choices=["base", "static"])
+    ap.add_argument("--suite", default="base", choices=["base", "static", "extra", "all"])
     a = ap.parse_args()
     global CASES
     CASES = suite_cases(a.suite)

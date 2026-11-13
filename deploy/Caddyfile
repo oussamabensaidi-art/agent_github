@@ -1,0 +1,27 @@
+# Proxy HTTPS de l'agent de revue PR (profil « proxy » de docker-compose.prod.yml).
+# PUBLIC_HOST = nom DNS du serveur. Certificat : automatique si le nom est public ;
+# sur un réseau interne, remplacer `tls` par le certificat de la PKI Calipso :
+#   tls /etc/caddy/certs/revue-pr.crt /etc/caddy/certs/revue-pr.key
+{$PUBLIC_HOST} {
+	encode gzip
+
+	# Seules routes exposées : le webhook GitHub, l'interface et la sonde de santé.
+	@allowed path /webhook/github /ui /ui/* /health
+	handle @allowed {
+		reverse_proxy api:8020 {
+			# Flux en direct de l'interface (SSE) : pas de mise en tampon.
+			flush_interval -1
+		}
+	}
+	handle {
+		respond 404
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+}

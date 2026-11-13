@@ -14,13 +14,15 @@ import logging
 import re
 import time
 
+from agent import context as ctx_mod
 from agent import prompts
 from agent.checks import changed_map, evaluate_ci, tool_findings, tool_incomplete
 from agent.diff import FileDiff, build_chunks, excerpt, file_from_github, filter_files, is_incomplete_reason
 from agent.events import emit
 from agent.notify import build_alert
 from agent.review import (
-    CHECK_CONCLUSION, OUTCOME_FAILED, OUTCOME_SUPERSEDED, STATUS_STATE, VERDICT_BLOCKING, VERDICT_TEXT,
+    CHECK_CONCLUSION, MARKER, OUTCOME_FAILED, OUTCOME_SUPERSEDED, STATUS_STATE, SUPERSEDED_MARK,
+    VERDICT_BLOCKING, VERDICT_TEXT, superseded_body,
     Finding, compute_verdict, finding_from_llm, render_comment, render_summary, validate_findings_detailed,
 )
 from agent.secrets_scan import redact_text, scan_and_redact, scan_pr_text
@@ -99,6 +101,7 @@ async def fetch_pr(state: ReviewState, config) -> dict:
         "pr_body": pr.get("body") or "",
         "pr_author": (pr.get("user") or {}).get("login", ""),
         "pr_url": pr.get("html_url", ""),
+        "base_ref": (pr.get("base") or {}).get("ref", ""),
         "check_id": check_id,
     }
 
@@ -139,10 +142,39 @@ async def scan_secrets(state: ReviewState, config) -> dict:
 
 
 @node()
+async def load_context(state: ReviewState, config) -> dict:
+    """Règles du dépôt (branche de base) et en-têtes des fichiers PHP modifiés.
+
+    Lecture seule, jamais bloquante : en cas d'échec, la revue se fait sans contexte."""
+    s = svc(config)
+    if not s.settings.CONTEXT_ENABLED or not hasattr(s.github, "get_file"):
+        return {"repo_rules": "", "file_headers": {}}
+    repo_rules, headers = "", {}
+    try:
+        if state.get("base_ref"):
+            raw = await s.github.get_file(state["repo"], s.settings.REPO_RULES_PATH, state["base_ref"])
+            repo_rules = ctx_mod.clean_repo_rules(raw or "", s.settings.REPO_RULES_MAX_CHARS)
+        targets = [f.path for f in state["files"]
+                   if f.path.endswith(".php") and f.status not in ("added", "removed")][: s.settings.CONTEXT_MAX_FILES]
+        sources = await asyncio.gather(*(s.github.get_file(state["repo"], p, state["head_sha"]) for p in targets),
+                                       return_exceptions=True)
+        for path, source in zip(targets, sources):
+            if isinstance(source, str):
+                header = ctx_mod.file_header(source)
+                if header:
+                    headers[path] = header
+    except Exception as e:  # noqa: BLE001
+        log.warning("contexte indisponible : %s", e)
+    emit("context_loaded", repo_rules=bool(repo_rules), files=sorted(headers))
+    return {"repo_rules": repo_rules, "file_headers": headers}
+
+
+@node()
 async def ai_review(state: ReviewState, config) -> dict:
     s = svc(config)
     chunks = build_chunks(state["files"], s.settings.CHUNK_MAX_CHARS)
-    system = prompts.system_prompt(s.rules)
+    system = prompts.system_prompt(s.rules, state.get("repo_rules", ""))
+    headers = state.get("file_headers", {})
     files = {f.path: f for f in state["files"]}
     concurrency = max(1, s.settings.LLM_CONCURRENCY)
     emit("chunks_planned", total=len(chunks), concurrency=concurrency,
@@ -154,7 +186,10 @@ async def ai_review(state: ReviewState, config) -> dict:
         async with sem:
             t0 = time.perf_counter()
             emit("chunk_started", index=i)
-            user = prompts.user_prompt(state.get("pr_title", ""), state.get("pr_body", ""), chunk, i, len(chunks))
+            context = ctx_mod.context_for_chunk(CHUNK_FILE_RE.findall(chunk), headers,
+                                                s.settings.CONTEXT_MAX_CHARS)
+            user = prompts.user_prompt(state.get("pr_title", ""), state.get("pr_body", ""), chunk, i,
+                                       len(chunks), context)
             try:
                 raw = await s.llm.review(system, user)
             except Exception as e:  # noqa: BLE001 — un lot raté n'arrête pas la revue
@@ -304,6 +339,10 @@ async def publish(state: ReviewState, config) -> dict:
     reason = await blocked_reason(s)
     if reason:
         emit("publication_skipped", reason=reason, step="revue et check")
+        if reason == "kill_switch":
+            verdict = state["verdict"]
+            await defer_check(s, state, verdict, f"{VERDICT_TEXT[verdict]} — {len(state['findings'])} remarque(s)",
+                              state["summary"])
         return {"published": False, "publish_skipped": reason}
 
     # Dernière vérification : si un commit plus récent est arrivé pendant
@@ -327,8 +366,25 @@ async def publish(state: ReviewState, config) -> dict:
     fallback = render_summary(state["verdict"], findings, 0, state.get("skipped", []),
                               state.get("incomplete_reasons", []), s.llm.model, state["head_sha"],
                               s.rules_version, pilot, details_url(s, state))
+    # Nouveau push sur la même PR : ne pas répéter les commentaires déjà posés et
+    # encore valides, puis replier la synthèse des revues précédentes.
+    old_reviews, reused = [], 0
+    try:
+        comments, reused, old_reviews = await _dedupe_comments(s, state, comments)
+    except Exception as e:  # noqa: BLE001 — sans cette lecture, on publie tout (comportement précédent)
+        log.warning("revues précédentes illisibles : %s", e)
+    body = state["summary"]
+    if reused:
+        body += (f"\n\n> {reused} remarque(s) déjà commentée(s) lors d'une analyse précédente "
+                 "ne sont pas répétées en ligne.")
     await s.github.create_review(state["repo"], state["pr_number"], state["head_sha"],
-                                 state["summary"], comments, fallback)
+                                 body, comments, fallback)
+    for old in old_reviews:
+        try:
+            await s.github.update_review(state["repo"], state["pr_number"], old["id"],
+                                         superseded_body(old.get("commit_id") or "", state["head_sha"]))
+        except Exception as e:  # noqa: BLE001 — cosmétique : la nouvelle revue est publiée
+            log.warning("ancienne revue %s non repliée : %s", old.get("id"), e)
     verdict = state["verdict"]
     await s.github.finish_status(
         state["repo"], state["head_sha"], s.settings.CHECK_NAME, state.get("check_id"),
@@ -336,10 +392,42 @@ async def publish(state: ReviewState, config) -> dict:
         details_url(s, state),
     )
     use_checks = getattr(s.github, "use_checks", True)
-    emit("published", inline=len(comments),
+    emit("published", inline=len(comments), reused=reused, superseded_reviews=len(old_reviews),
          github_state=CHECK_CONCLUSION[verdict] if use_checks else STATUS_STATE[verdict],
          mode="check run" if use_checks else "statut de commit")
     return {"published": True}
+
+
+async def _dedupe_comments(s: Services, state: ReviewState, comments: list[dict]) -> tuple[list[dict], int, list[dict]]:
+    """(commentaires à publier, nombre déjà présents, anciennes revues de l'agent à replier)."""
+    reviews = await s.github.list_reviews(state["repo"], state["pr_number"])
+    own = [r for r in reviews if MARKER in (r.get("body") or "")]
+    if not own:
+        return comments, 0, []
+    own_ids = {r["id"] for r in own}
+    # Même fichier, même ligne, commentaire de l'agent encore valide : déjà signalé. On ne compare
+    # pas le texte, le modèle reformulant la même remarque d'une analyse à l'autre.
+    existing = {(c.get("path"), c.get("line"))
+                for c in await s.github.list_review_comments(state["repo"], state["pr_number"])
+                if c.get("pull_request_review_id") in own_ids and c.get("line") is not None}  # line None = obsolète
+    fresh = [c for c in comments if (c["path"], c["line"]) not in existing]
+    old = [r for r in own if r.get("commit_id") != state["head_sha"] and SUPERSEDED_MARK not in (r.get("body") or "")]
+    return fresh, len(comments) - len(fresh), old
+
+
+async def defer_check(s: Services, state: ReviewState, outcome: str, title: str, summary: str) -> None:
+    """Interrupteur coupé alors qu'un check est déjà « en cours » : sa clôture est mise de côté
+    et sera publiée par un worker dès la réactivation (sinon il resterait « en cours »)."""
+    if not state.get("check_id") or not hasattr(s.controls, "defer_check"):
+        return
+    await s.controls.defer_check({
+        "repo": state["repo"], "sha": state["head_sha"], "check_id": state["check_id"],
+        "installation_id": state.get("installation_id"), "name": s.settings.CHECK_NAME,
+        "outcome": outcome, "title": title, "details_url": details_url(s, state),
+        "summary": summary + "\n\n> Publication coupée pendant cette analyse : la revue et ses commentaires "
+                             "en ligne n'ont pas été publiés. Ce check a été clos après réactivation.",
+    })
+    emit("check_deferred", check_id=state["check_id"])
 
 
 @node()
@@ -428,6 +516,9 @@ async def fail(state: ReviewState, config) -> dict:
         reason = await blocked_reason(s)
         if reason:
             emit("publication_skipped", reason=reason, step="statut d'échec")
+            if reason == "kill_switch":
+                await defer_check(s, state, OUTCOME_FAILED, VERDICT_TEXT[OUTCOME_FAILED],
+                                  "L'analyse automatique n'a pas pu aboutir. L'incident est journalisé.")
         else:
             try:
                 await s.github.finish_status(

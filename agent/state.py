@@ -22,6 +22,7 @@ class ReviewState(TypedDict, total=False):
     pr_body: str
     pr_author: str
     pr_url: str
+    base_ref: str
     stale: bool
     check_id: int | None
 
@@ -29,6 +30,10 @@ class ReviewState(TypedDict, total=False):
     files: list[FileDiff]
     skipped: list[tuple[str, str]]
     total_files: int
+
+    # Contexte (hors diff) : règles du dépôt, en-têtes des fichiers modifiés
+    repo_rules: str
+    file_headers: dict[str, str]
 
     # Analyse
     secret_findings: list[Finding]

@@ -1,0 +1,22 @@
+=== m14b : qwen3api qwen3-14b-awq/chat — 10:58:06
+  worker prêt (fournisseur qwen3api, modèle qwen3-14b-awq/chat @ 188.40.58.26, 3 lot(s) en parallèle, journal postgres)
+30 PR ouvertes en 5.3 s
+- Verdicts conformes : **30/30**
+- Défauts attendus détectés : **20/21**
+- PR propres sans remarque majeure ou critique : **7/8**
+- Durée totale (attente comprise) : p50 **171.3 s**, p95 **306.0 s**, max 328.0 s
+=== m30b : openrouter qwen/qwen3-coder-30b-a3b-instruct — 11:07:09
+  worker prêt (fournisseur openrouter, modèle openrouter:qwen/qwen3-coder-30b-a3b-instruct @ openrouter.ai, 3 lot(s) en parallèle, journal postgres)
+30 PR ouvertes en 5.7 s
+- Verdicts conformes : **29/30**
+- Défauts attendus détectés : **17/21**
+- PR propres sans remarque majeure ou critique : **8/8**
+- Durée totale (attente comprise) : p50 **151.5 s**, p95 **205.5 s**, max 209.6 s
+=== mnext : openrouter qwen/qwen3-coder-next — 11:13:57
+  worker prêt (fournisseur openrouter, modèle openrouter:qwen/qwen3-coder-next @ openrouter.ai, 3 lot(s) en parallèle, journal postgres)
+30 PR ouvertes en 7.9 s
+- Verdicts conformes : **29/30**
+- Défauts attendus détectés : **20/21**
+- PR propres sans remarque majeure ou critique : **6/8**
+- Durée totale (attente comprise) : p50 **185.4 s**, p95 **231.2 s**, max 234.8 s
+=== terminé — 11:21:58

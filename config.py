@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     QUEUE_KEY: str = "prreview:queue"
     DLQ_KEY: str = "prreview:dlq"
     DEDUP_TTL_SECONDS: int = 86400
+    # File fiable : un job dont le worker meurt est remis en file ; au-delà de
+    # JOB_MAX_RETRIES reprises il part en DLQ.
+    JOB_MAX_RETRIES: int = 1
+    WORKER_HEARTBEAT_TTL: int = 60
 
     # --- Fournisseur du modèle : "ollama", "qwen3api" (API LLM Calipso) ou "openrouter" (banc) ---
     LLM_PROVIDER: str = "ollama"
@@ -88,6 +92,13 @@ class Settings(BaseSettings):
     CI_GRACE_SECONDS: int = 60       # délai avant de conclure « aucune CI »
     CI_REQUIRED: bool = False        # true : pas de CI = analyse incomplète
     CI_CHECK_NAMES: str = ""         # vide = tous les checks sauf celui de l'agent
+
+    # --- Contexte donné au modèle en plus du diff (nœud load_context) ---
+    CONTEXT_ENABLED: bool = True
+    REPO_RULES_PATH: str = ".github/pr-review.md"   # lu sur la branche de base
+    REPO_RULES_MAX_CHARS: int = 2000
+    CONTEXT_MAX_FILES: int = 12
+    CONTEXT_MAX_CHARS: int = 2000                   # par lot envoyé au modèle
 
     # --- Alerte email (PR bloquante) ---
     SMTP_HOST: str = ""

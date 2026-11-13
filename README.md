@@ -31,10 +31,11 @@ Graphe (`agent/graph.py`) — chaque nœud émet `node_started` / `node_finished
 | `fetch_pr` | Lit la PR ; si un push plus récent existe → job obsolète, on s'arrête. Passe le check à « en cours » (sauf interrupteur coupé). |
 | `load_diff` | Récupère les fichiers ; exclut lock files, générés, `vendor/`, supprimés, binaires ; applique les limites de taille. **Un fichier modifié dont GitHub n'a pas fourni le patch est « incomplet », jamais « exclu ».** |
 | `scan_secrets` | Détecte les secrets dans les lignes ajoutées **et dans le titre / la description de la PR** (remarque critique déterministe) et les **masque avant** tout envoi au modèle. |
+| `load_context` | Lit les **règles propres au dépôt** (`.github/pr-review.md`, sur la branche de **base** : une PR ne peut pas modifier les règles de sa propre revue) et l'**en-tête des fichiers PHP modifiés** (imports, attributs et déclaration de la classe). Masqué, borné, jamais bloquant. |
 | `ai_review` | Découpe le diff en lots, analysés **en parallèle** (`LLM_CONCURRENCY`). Un lot raté n'arrête pas la revue. Chaque remarque est émise dès que son lot répond. |
 | `static_checks` | **En parallèle de `ai_review`.** Envoie l'archive du commit au conteneur `checker` (gitleaks, composer audit, PHPStan, PHP-CS-Fixer) et lit le résultat de la **CI du dépôt** (check runs GitHub : PHPUnit n'est jamais exécuté par l'agent). Seules les lignes **ajoutées** par la PR sont imputées. Une panne → analyse incomplète, jamais d'erreur. |
 | `decide` | Écarte les remarques inventées (fichier hors diff), sous le seuil de gravité, ou en double ; calcule le verdict. |
-| `publish` | **Relit la PR** : si un commit plus récent est arrivé, rien n'est publié et le check est clos « remplacé ». Sinon revue GitHub avec commentaires en ligne + check run (ou statut de commit). |
+| `publish` | **Relit la PR** : si un commit plus récent est arrivé, rien n'est publié et le check est clos « remplacé ». Sinon revue GitHub avec commentaires en ligne + check run (ou statut de commit). **Nouveau push sur une PR déjà relue** : les commentaires déjà posés et encore valides ne sont pas répétés, et la synthèse des revues précédentes de l'agent est repliée en une ligne. |
 | `alert` | Email si la PR est bloquante. |
 | `audit` / `fail` | Journal d'audit ; en cas d'erreur, check « action requise » / statut `error` (jamais vert) et job en DLQ. |
 
@@ -229,21 +230,30 @@ Le faux GitHub applique les contrôles du vrai (JWT de l'App, jeton obligatoire,
 La pertinence des remarques du modèle sur #101 est **rapportée** (référence :
 injection SQL L20, `dump()` L21, contrôle d'accès L17), pas assertée.
 
+## Déploiement
+
+`docker-compose.prod.yml` (API sur 127.0.0.1 derrière un proxy HTTPS, cookies sécurisés,
+premier démarrage en lecture seule) et `docs/deploiement.md` (décisions à valider,
+GitHub App de production, configuration, vérifications, exploitation, retour arrière).
+Le déploiement est fait par une personne de l'équipe, après validation.
+
 ## Limites connues (à traiter dans les phases suivantes)
 
-- Une nouvelle revue est publiée à chaque nouveau commit analysé ; pas encore
-  de suppression des remarques déjà faites sur un commit précédent.
+- Nouveau push : les commentaires en ligne des revues précédentes restent sur la PR
+  (GitHub les marque « obsolètes » quand la ligne change) ; seule leur synthèse est repliée.
 - La CI est lue par sondage (`CI_POLL_SECONDS`) : une CI plus longue que
   `CI_WAIT_SECONDS` rend l'analyse incomplète.
 - PHPStan n'analyse que les fichiers PHP modifiés (avec l'autoload du projet) ;
   sans l'extension Symfony / Doctrine, certaines erreurs de types restent invisibles.
-- File simple (`LPUSH`/`BRPOP`) : si un worker meurt pendant une analyse, ce
-  job est perdu (pas de DLQ). Passer à une file fiable (`BLMOVE` vers une liste
-  « en cours » + reprise) avant la production.
+- File fiable (`BLMOVE` vers une liste « en cours » par worker, acquittement en fin
+  d'analyse) : le job d'un worker mort est repris par un autre après expiration de son
+  battement de cœur (`WORKER_HEARTBEAT_TTL`, 60 s), puis part en DLQ après
+  `JOB_MAX_RETRIES` reprises. Une reprise relance l'analyse depuis le début.
 - Les auteurs ne sont pas joints par email : GitHub ne fournit pas leur adresse.
   L'alerte va à `ALERT_EMAILS`.
 - Interrupteur coupé **pendant** une analyse dont le check est déjà « en cours » :
-  ce check reste « en cours » sur GitHub (plus aucune écriture n'est permise).
+  la clôture du check est mise de côté (table `deferred_checks`) et publiée par un
+  worker dès la réactivation ; la revue de cette analyse, elle, n'est pas publiée.
 - Re-vérification du commit avant publication : il reste une fenêtre de quelques
   centaines de millisecondes entre la relecture de la PR et l'envoi de la revue.
 - Les remarques arrivent lot par lot (le modèle renvoie un JSON complet par lot),
@@ -258,5 +268,5 @@ injection SQL L20, `dump()` L21, contrôle d'accès L17), pas assertée.
 |---|---|---|
 | 1-2 | Prototype : webhook, diff, revue IA, commentaire, verdict, alerte, audit | ✅ ce dépôt |
 | 3-4 | Contrôles statiques : PHPStan, PHP-CS-Fixer, composer audit, gitleaks dans un conteneur isolé ; PHPUnit lu sur la CI du dépôt (nœud `static_checks`, en parallèle de la revue IA) | ✅ |
-| 5-6 | Contexte : code lié, règles par dépôt (`.github/pr-review.md`), calibrage du verdict | à faire |
+| 5-6 | Contexte : règles par dépôt (`.github/pr-review.md`), en-têtes des fichiers modifiés (nœud `load_context`) ; file fiable ; revue mise à jour à chaque push | ✅ (relecteurs spécialisés : à faire) |
 | 7-8 | Pilote sur un dépôt réel ; mesure de la pertinence (≥ 70 %), du délai (< 10 min) et du temps de revue | à faire |

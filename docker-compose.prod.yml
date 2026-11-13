@@ -1,0 +1,46 @@
+# PRODUCTION (serveur Calipso) — à empiler sur docker-compose.yml :
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# Voir docs/deploiement.md. Ne jamais ajouter ici docker-compose.override.yml,
+# docker-compose.github.yml (relais smee, Mailpit), ni les fichiers e2e / démo.
+#
+#  - L'api n'écoute que sur 127.0.0.1 : elle est publiée en HTTPS par le proxy
+#    inverse (service `proxy` ci-dessous, ou celui de l'infrastructure).
+#  - GitHub appelle directement https://<domaine>/webhook/github (pas de relais).
+#  - Premier démarrage en lecture seule (DRY_RUN=true) : rien n'est publié tant
+#    qu'un humain ne l'a pas décidé.
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:8020:8020"
+    environment:
+      UI_COOKIE_SECURE: "true"
+      UI_PUBLIC_URL: ${UI_PUBLIC_URL:?UI_PUBLIC_URL manquant (ex. https://revue-pr.calipso.example/ui)}
+      DEMO_MODE: "false"
+
+  worker:
+    environment:
+      DRY_RUN: ${DRY_RUN:-true}
+      PILOT_MODE: "true"
+      CHECKS_ENABLED: "true"
+      UI_PUBLIC_URL: ${UI_PUBLIC_URL:?UI_PUBLIC_URL manquant}
+      # Modèle sur le réseau privé uniquement : son hôte doit figurer ici.
+      LLM_ALLOWED_HOSTS: ${LLM_ALLOWED_HOSTS:?LLM_ALLOWED_HOSTS manquant (hôte privé du modèle)}
+
+  # Proxy HTTPS optionnel (profil « proxy ») si l'infrastructure n'en fournit pas :
+  #   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile proxy up -d
+  proxy:
+    image: caddy:2-alpine
+    profiles: [proxy]
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:-}
+    depends_on: [api]
+    restart: unless-stopped
+
+volumes:
+  caddy-data:

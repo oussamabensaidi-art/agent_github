@@ -16,7 +16,8 @@ COPY --from=composer /usr/bin/composer /usr/bin/composer
 RUN mkdir -p /opt/tools \
  && cd /opt/tools \
  && COMPOSER_HOME=/tmp/composer composer require --no-interaction --no-progress \
-      phpstan/phpstan:2.3.5 friendsofphp/php-cs-fixer:3.95.30 \
+      phpstan/phpstan:2.3.5 phpstan/phpstan-symfony:2.1.1 phpstan/phpstan-doctrine:2.1.2 \
+      friendsofphp/php-cs-fixer:3.95.30 \
  && rm -rf /tmp/composer
 
 # gitleaks, version figée, somme de contrôle vérifiée.
