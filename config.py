@@ -93,6 +93,11 @@ class Settings(BaseSettings):
     CI_REQUIRED: bool = False        # true : pas de CI = analyse incomplète
     CI_CHECK_NAMES: str = ""         # vide = tous les checks sauf celui de l'agent
 
+    # --- Relecteurs spécialisés (compétences de skills/) ---
+    # Liste ordonnée ; vide = un seul relecteur généraliste (comportement d'avant).
+    REVIEWERS: str = "securite,code"
+    SKILLS_DIR: str = "skills"
+
     # --- Contexte donné au modèle en plus du diff (nœud load_context) ---
     CONTEXT_ENABLED: bool = True
     REPO_RULES_PATH: str = ".github/pr-review.md"   # lu sur la branche de base
@@ -143,6 +148,10 @@ class Settings(BaseSettings):
     @property
     def trigger_actions(self) -> list[str]:
         return self._csv(self.TRIGGER_ACTIONS)
+
+    @property
+    def reviewers(self) -> list[str]:
+        return self._csv(self.REVIEWERS)
 
     @property
     def ci_check_names(self) -> list[str]:

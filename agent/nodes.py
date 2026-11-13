@@ -16,6 +16,7 @@ import time
 
 from agent import context as ctx_mod
 from agent import prompts
+from agent import skills as skills_mod
 from agent.checks import changed_map, evaluate_ci, tool_findings, tool_incomplete
 from agent.diff import FileDiff, build_chunks, excerpt, file_from_github, filter_files, is_incomplete_reason
 from agent.events import emit
@@ -171,50 +172,68 @@ async def load_context(state: ReviewState, config) -> dict:
 
 @node()
 async def ai_review(state: ReviewState, config) -> dict:
+    """Revue IA : chaque lot du diff est relu par chaque relecteur spécialisé concerné
+    (sécurité, code & Symfony…), en parallèle, avec ses seules compétences applicables."""
     s = svc(config)
     chunks = build_chunks(state["files"], s.settings.CHUNK_MAX_CHARS)
-    system = prompts.system_prompt(s.rules, state.get("repo_rules", ""))
     headers = state.get("file_headers", {})
+    repo_rules = state.get("repo_rules", "")
     files = {f.path: f for f in state["files"]}
+    all_skills = s.skills if s.skills is not None else skills_mod.load_skills(s.settings.SKILLS_DIR)
+    enabled = s.settings.reviewers
+
+    # Tâches : (lot, relecteur, compétences). Sans relecteur configuré : un seul passage généraliste.
+    tasks: list[dict] = []
+    for i, chunk in enumerate(chunks, start=1):
+        paths = CHUNK_FILE_RE.findall(chunk)
+        planned = skills_mod.plan(paths, all_skills, enabled) if enabled else []
+        if not planned:
+            tasks.append({"chunk": i, "text": chunk, "paths": paths, "reviewer": "", "label": "", "focus": "",
+                          "skills": []})
+        for reviewer, skills in planned:
+            tasks.append({"chunk": i, "text": chunk, "paths": paths, "reviewer": reviewer.name,
+                          "label": reviewer.label, "focus": reviewer.focus, "skills": skills})
     concurrency = max(1, s.settings.LLM_CONCURRENCY)
-    emit("chunks_planned", total=len(chunks), concurrency=concurrency,
-         chunks=[{"index": i, "files": CHUNK_FILE_RE.findall(c), "chars": len(c)}
-                 for i, c in enumerate(chunks, start=1)])
+    emit("chunks_planned", total=len(tasks), concurrency=concurrency, lots=len(chunks),
+         chunks=[{"index": k, "lot": t["chunk"], "files": t["paths"], "chars": len(t["text"]),
+                  "reviewer": t["reviewer"], "reviewer_label": t["label"],
+                  "skills": [sk.name for sk in t["skills"]]}
+                 for k, t in enumerate(tasks, start=1)])
     sem = asyncio.Semaphore(concurrency)
 
-    async def review_chunk(i: int, chunk: str) -> list[Finding] | None:
+    async def review_task(k: int, t: dict) -> list[Finding] | None:
         async with sem:
             t0 = time.perf_counter()
-            emit("chunk_started", index=i)
-            context = ctx_mod.context_for_chunk(CHUNK_FILE_RE.findall(chunk), headers,
-                                                s.settings.CONTEXT_MAX_CHARS)
-            user = prompts.user_prompt(state.get("pr_title", ""), state.get("pr_body", ""), chunk, i,
-                                       len(chunks), context)
+            emit("chunk_started", index=k)
+            system = prompts.system_prompt(s.rules, repo_rules, t["focus"], skills_mod.skills_text(t["skills"]))
+            context = ctx_mod.context_for_chunk(t["paths"], headers, s.settings.CONTEXT_MAX_CHARS)
+            user = prompts.user_prompt(state.get("pr_title", ""), state.get("pr_body", ""), t["text"],
+                                       t["chunk"], len(chunks), context)
             try:
                 raw = await s.llm.review(system, user)
-            except Exception as e:  # noqa: BLE001 — un lot raté n'arrête pas la revue
-                log.warning("lot %s/%s en échec : %s", i, len(chunks), e)
-                emit("chunk_failed", index=i, duration_ms=round((time.perf_counter() - t0) * 1000),
+            except Exception as e:  # noqa: BLE001 — un passage raté n'arrête pas la revue
+                log.warning("lot %s (%s) en échec : %s", t["chunk"], t["reviewer"] or "généraliste", e)
+                emit("chunk_failed", index=k, duration_ms=round((time.perf_counter() - t0) * 1000),
                      error=f"{type(e).__name__}: {e}"[:300])
                 return None
             found = []
-            for k, r in enumerate(raw, start=1):
+            for j, r in enumerate(raw, start=1):
                 f = finding_from_llm(r)
                 if f:
-                    f.id, f.chunk = f"c{i}-{k}", i
+                    f.id, f.chunk, f.reviewer = f"c{k}-{j}", k, t["reviewer"]
                     found.append(f)
                     emit("finding", **finding_event(f, files))
-            emit("chunk_finished", index=i, duration_ms=round((time.perf_counter() - t0) * 1000),
+            emit("chunk_finished", index=k, duration_ms=round((time.perf_counter() - t0) * 1000),
                  findings=len(found))
             return found
 
-    results = await asyncio.gather(*(review_chunk(i, c) for i, c in enumerate(chunks, start=1)))
+    results = await asyncio.gather(*(review_task(k, t) for k, t in enumerate(tasks, start=1)))
     findings = [f for r in results if r for f in r]
     failed = sum(1 for r in results if r is None)
     incomplete = list(state.get("incomplete_reasons", []))
     if failed:
-        incomplete.append(f"{failed} lot(s) sur {len(chunks)} n'ont pas pu être analysés par le modèle")
-    return {"llm_findings": findings, "chunks_total": len(chunks), "chunks_failed": failed,
+        incomplete.append(f"{failed} passage(s) de relecture sur {len(tasks)} n'ont pas pu être analysés par le modèle")
+    return {"llm_findings": findings, "chunks_total": len(tasks), "chunks_failed": failed,
             "incomplete_reasons": incomplete}
 
 

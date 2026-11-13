@@ -81,6 +81,9 @@ class FakeMailer:
 
 
 def make(tmp_path, github=None, llm=None, **overrides):
+    # Relecteur unique par défaut : ces tests portent sur le pipeline ; les relecteurs
+    # spécialisés ont leurs propres tests (tests/test_skills.py).
+    overrides.setdefault("REVIEWERS", "")
     settings = Settings(_env_file=None, AUDIT_LOG_PATH=str(tmp_path / "audit.jsonl"),
                         ALERT_EMAILS="lead@calipso.fr", SMTP_HOST="smtp", **overrides)
     return Services(github=github or FakeGitHub(), llm=llm or FakeLLM(), mailer=FakeMailer(),

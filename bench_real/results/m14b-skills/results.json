@@ -1,0 +1,1777 @@
+{
+  "tag": "m14b-skills",
+  "generated_at": "2026-11-13T12:33:53.164226+00:00",
+  "launch_spread_s": 5.5,
+  "results": [
+    {
+      "id": "D1-sql-injection",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 53,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "injection SQL (concaténation)",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Repository/ContractRepository.php",
+          "line": 79,
+          "title": "Injection SQL via concaténation de paramètre utilisateur",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 1,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/aa12c7805dea41d3bf1ca445c18bec52"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 38121,
+      "run_ms": 68630,
+      "total_ms": 106751,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/53",
+      "sha": "c5213f7"
+    },
+    {
+      "id": "D2-acces-suppression",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 58,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "route de suppression sans contrôle de droits",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 108,
+          "title": "Accès non restreint à l'action de suppression",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "templates/contract/show.html.twig",
+          "line": 24,
+          "title": "Manque de protection CSRF sur le formulaire de suppression",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "critical",
+          "path": "templates/contract/show.html.twig",
+          "line": 24,
+          "title": "Manque de protection CSRF sur le formulaire de suppression",
+          "source": "llm",
+          "explanation": "Le formulaire de suppression utilise la méthode POST sans token CSRF. Conformément aux règles du dépôt, tous les formulaires POST doivent inclure un token CSRF via `csrf_token()`, comme pour le formulaire de résiliation."
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 2,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/128b0e4fb6f54786b8baa4eabc0dcaca"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 234450,
+      "run_ms": 33806,
+      "total_ms": 268256,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/58",
+      "sha": "68abb95"
+    },
+    {
+      "id": "D3-dump-oublie",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 55,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "dump() oublié",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 55,
+          "title": "Appel à dump() dans un contrôleur de production",
+          "source": "llm"
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 55,
+          "title": "Appel à dump() oublié",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/78119f45a4e54b4c83de91695bc6d50d"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 165713,
+      "run_ms": 25636,
+      "total_ms": 191349,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/55",
+      "sha": "49bc458"
+    },
+    {
+      "id": "D4-secret-en-dur",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 51,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "clé d'API en dur (détection déterministe)",
+          "found": true,
+          "by": [
+            "secret-scan"
+          ],
+          "ai_expected": false
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 21,
+          "title": "Appel HTTP sans gestion des erreurs",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 13,
+          "title": "Secret en dur détecté(e) dans le code",
+          "source": "secret-scan"
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 15,
+          "title": "PHPStan : Parameter $http of method App\\Service\\CrmNotifier::__construct() has invalid type Symfony\\Contracts\\HttpClient\\HttpClientInterface.",
+          "source": "phpstan"
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 15,
+          "title": "PHPStan : Property App\\Service\\CrmNotifier::$http has unknown class Symfony\\Contracts\\HttpClient\\HttpClientInterface as its type.",
+          "source": "phpstan"
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 21,
+          "title": "PHPStan : Call to method request() on an unknown class Symfony\\Contracts\\HttpClient\\HttpClientInterface.",
+          "source": "phpstan"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 21,
+          "title": "Appel HTTP sans gestion des erreurs",
+          "source": "llm",
+          "explanation": "L'appel à HttpClient::request() utilise un timeout mais ne gère pas les erreurs potentielles (ex. : erreurs réseau, erreurs HTTP 4xx/5xx). Cela peut entraîner une exception non capturée si la requête échoue."
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 15,
+          "title": "PHPStan : Parameter $http of method App\\Service\\CrmNotifier::__construct() has invalid type Symfony\\Contracts\\HttpClient\\HttpClientInterface.",
+          "source": "phpstan",
+          "explanation": ""
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 15,
+          "title": "PHPStan : Property App\\Service\\CrmNotifier::$http has unknown class Symfony\\Contracts\\HttpClient\\HttpClientInterface as its type.",
+          "source": "phpstan",
+          "explanation": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+        },
+        {
+          "severity": "major",
+          "path": "src/Service/CrmNotifier.php",
+          "line": 21,
+          "title": "PHPStan : Call to method request() on an unknown class Symfony\\Contracts\\HttpClient\\HttpClientInterface.",
+          "source": "phpstan",
+          "explanation": "Learn more at https://phpstan.org/user-guide/discovering-symbols"
+        }
+      ],
+      "noise_major": 4,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 5 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/458fa285ea7c40ebbb033313fad88298"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 5,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 266182,
+      "run_ms": 62026,
+      "total_ms": 328208,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/51",
+      "sha": "3871212"
+    },
+    {
+      "id": "D5-montant-flottant",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 47,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "flottant + troncature au lieu d'arrondi",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 24,
+          "title": "Calcul de prime avec perte de précision en flottant",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci",
+          "explanation": "Conclusion « failure ». Détail : https://github.com/test-agent-revue/project_test_3/actions/runs/43425087995/job/131884438653"
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/78bad4ddff654c60b144623ca92a1cec"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 232703,
+      "run_ms": 33616,
+      "total_ms": 266319,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/47",
+      "sha": "34dd830"
+    },
+    {
+      "id": "D6-reference-dupliquee",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 48,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "référence suivante non incrémentée (doublon)",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Repository/ContractRepository.php",
+          "line": 83,
+          "title": "Suppression de l'incrémentation du numéro de référence",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci",
+          "explanation": "Conclusion « failure ». Détail : https://github.com/test-agent-revue/project_test_3/actions/runs/43425089018/job/131884441816"
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/c2c10d5dd1a14dd4924c5bb5ea46ec93"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 294119,
+      "run_ms": 29908,
+      "total_ms": 324027,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/48",
+      "sha": "8086d20"
+    },
+    {
+      "id": "D7-xss-raw",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 61,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "|raw sur une donnée saisie (XSS)",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "templates/contract/show.html.twig",
+          "line": 12,
+          "title": "XSS vulnérabilité par utilisation de |raw sur donnée utilisateur",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 1,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/0effcf3074054bc6a679a4d9032c0c2d"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 176209,
+      "run_ms": 28293,
+      "total_ms": 204502,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/61",
+      "sha": "9ba2a51"
+    },
+    {
+      "id": "D8-secret-description",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 43,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "mot de passe dans la description de la PR",
+          "found": true,
+          "by": [
+            "secret-scan"
+          ],
+          "ai_expected": false
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "(titre / description de la PR)",
+          "line": null,
+          "title": "Secret en dur détecté(e) dans le description de la PR",
+          "source": "secret-scan"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/dcd71b980bc1452eb76388183032357c"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 94874,
+      "run_ms": 22703,
+      "total_ms": 117577,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/43",
+      "sha": "5079738"
+    },
+    {
+      "id": "C1-export-csv",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "clean",
+      "pr": 47,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/2e2d2ee34c3b4c68b082068aa2889ac4"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 126869,
+      "run_ms": 39063,
+      "total_ms": 165932,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/47",
+      "sha": "eb13565"
+    },
+    {
+      "id": "C2-liste-pluriel",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "clean",
+      "pr": 45,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/2bf6df41b0f94741a2f555eff3184cf9"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 117423,
+      "run_ms": 29350,
+      "total_ms": 146773,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/45",
+      "sha": "cd90773"
+    },
+    {
+      "id": "C3-filtre-twig-money",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "clean",
+      "pr": 62,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/1d53803ff31d4bf089a5c603206e2615"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 191225,
+      "run_ms": 45530,
+      "total_ms": 236755,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/62",
+      "sha": "29c630e"
+    },
+    {
+      "id": "E1-gros-fichier",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "edge",
+      "pr": 50,
+      "status": "ok",
+      "verdict": "ANALYSE_INCOMPLETE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "ANALYSE_INCOMPLETE"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "action_required",
+        "title": "⚪ Analyse incomplète — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/9c3a47c17785418caf697ccc6608e9cd"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 136214,
+      "run_ms": 6406,
+      "total_ms": 142620,
+      "chunks": 0,
+      "chunks_failed": 0,
+      "incomplete_reasons": [
+        "`tests/fixtures/portefeuille_2025.csv` non analysé : diff non fourni par GitHub (6001 lignes modifiées)"
+      ],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/50",
+      "sha": "6a0fab6"
+    },
+    {
+      "id": "S1-phpstan-methode",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 60,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "méthode inexistante (PHPStan)",
+          "found": true,
+          "by": [
+            "phpstan"
+          ],
+          "ai_expected": false
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 43,
+          "title": "Accès non contrôlé à un endpoint sensible",
+          "source": "llm"
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 44,
+          "title": "Nouvelle logique métier sans test",
+          "source": "llm"
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 48,
+          "title": "PHPStan : Call to an undefined method App\\Service\\PremiumCalculator::annualTotalCents().",
+          "source": "phpstan"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 43,
+          "title": "Accès non contrôlé à un endpoint sensible",
+          "source": "llm",
+          "explanation": "L'endpoint '/totaux.json' retourne des données sensibles (montants annuels de contrats) sans vérification des droits. Le #[IsGranted] de classe (ROLE_USER) est insuffisant : cette route devrait exiger ROLE_GESTIONNAIRE pour accéder aux totaux des contrats."
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 44,
+          "title": "Nouvelle logique métier sans test",
+          "source": "llm",
+          "explanation": "La méthode `totals()` implémente une nouvelle fonctionnalité métier (export JSON des totaux annuels) sans test associé. Selon les règles d'équipe, toute logique métier nouvelle doit être accompagnée d'un test."
+        }
+      ],
+      "noise_major": 2,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 3 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/0063ef29b8764604a3566f491a69cf02"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 3,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 142527,
+      "run_ms": 44240,
+      "total_ms": 186767,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/60",
+      "sha": "7e877a0"
+    },
+    {
+      "id": "S2-ci-en-echec",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 53,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "tests en échec dans la CI",
+          "found": true,
+          "by": [
+            "ci"
+          ],
+          "ai_expected": false
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 26,
+          "title": "Logique inversée du plafonnement",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 26,
+          "title": "Logique inversée du plafonnement",
+          "source": "llm",
+          "explanation": "La modification remplace `max()` par `min()` avec la valeur minimum, ce qui inverse la logique. Le PR décrit un plafonnement (maximum) mais le code applique un plafond sur la valeur minimum (qui est une borne inférieure)."
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/2b6ae81e79c84cfb855659194031f9c1"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 320702,
+      "run_ms": 43610,
+      "total_ms": 364312,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/53",
+      "sha": "a26d0b2"
+    },
+    {
+      "id": "S3-dependance-vulnerable",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 49,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "dépendance vulnérable (composer audit)",
+          "found": true,
+          "by": [
+            "composer-audit"
+          ],
+          "ai_expected": false
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "composer.lock",
+          "line": null,
+          "title": "Dépendance vulnérable : guzzlehttp/guzzle (14 avis de sécurité)",
+          "source": "composer-audit"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/5019afd9e75149b39da3277d016e9ef3"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 262673,
+      "run_ms": 31565,
+      "total_ms": 294238,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/49",
+      "sha": "f5ccdd2"
+    },
+    {
+      "id": "S4-style",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 55,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [
+        {
+          "label": "style non conforme (PHP-CS-Fixer)",
+          "found": true,
+          "by": [
+            "php-cs-fixer"
+          ],
+          "ai_expected": false
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 30,
+          "title": "Nouvelle logique métier sans test",
+          "source": "llm"
+        },
+        {
+          "severity": "minor",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 29,
+          "title": "Style non conforme (2 ligne(s) ajoutée(s))",
+          "source": "php-cs-fixer"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 30,
+          "title": "Nouvelle logique métier sans test",
+          "source": "llm",
+          "explanation": "La méthode `monthlyCents()` implémente une logique métier nouvelle (calcul de prime mensuelle), mais aucun test n'a été ajouté pour la valider. Selon les règles de l'équipe, toute nouvelle logique métier doit être accompagnée d'un test."
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/301fa7bbe34d410ebae3d05edd174ff5"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 500,
+      "run_ms": 69188,
+      "total_ms": 69688,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/55",
+      "sha": "953c200"
+    },
+    {
+      "id": "S5-propre-php",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "clean",
+      "pr": 48,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/b537b66a645a4fd18280625446617d16"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 327920,
+      "run_ms": 41456,
+      "total_ms": 369376,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/48",
+      "sha": "61d2fbd"
+    },
+    {
+      "id": "X1-redirection-ouverte",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 54,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "redirection ouverte (URL fournie par l'utilisateur)",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 123,
+          "title": "Redirection ouverte vers une URL provenant du paramètre de requête",
+          "source": "llm"
+        },
+        {
+          "severity": "minor",
+          "path": "src/Controller/ContractController.php",
+          "line": 123,
+          "title": "Utilisation d'une URL brute au lieu d'une route nommée",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "minor",
+          "path": "src/Controller/ContractController.php",
+          "line": 123,
+          "title": "Utilisation d'une URL brute au lieu d'une route nommée",
+          "source": "llm",
+          "explanation": "Le code utilise une chaîne brute pour la redirection, ce qui peut être moins sécurisé et moins lisible que l'utilisation d'une route nommée. L'approche originale utilisait 'contract_show' qui est plus claire et évite les risques liés à une URL malformée."
+        }
+      ],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/a88d1005dcc3492397143004243042ff"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 561,
+      "run_ms": 69414,
+      "total_ms": 69975,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/54",
+      "sha": "2410782"
+    },
+    {
+      "id": "X2-csrf-retire",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 56,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "vérification CSRF supprimée",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 109,
+          "title": "Absence de protection CSRF dans une action modifiant des données",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 108,
+          "title": "Suppression de la vérification CSRF dans une action modifiant des données",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci",
+          "explanation": "Conclusion « failure ». Détail : https://github.com/test-agent-revue/project_test_2/actions/runs/43425090867/job/131884448332"
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 0,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 3 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/047daa3c6a75454e91cfea2bba9064e7"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 268047,
+      "run_ms": 27452,
+      "total_ms": 295499,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/56",
+      "sha": "1888ffb"
+    },
+    {
+      "id": "X3-droit-abaisse",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 50,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "modification ouverte aux lecteurs (ROLE_USER)",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 81,
+          "title": "Contrôle d'accès insuffisant sur l'action de modification",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 1,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/74c8d93d19df4a9b8115011395162f9e"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 323849,
+      "run_ms": 28502,
+      "total_ms": 352351,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/50",
+      "sha": "ef5d1e5"
+    },
+    {
+      "id": "X4-donnees-dans-les-logs",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 56,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "données du client écrites dans les logs",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 55,
+          "title": "Données personnelles (SIREN) écrites dans les logs",
+          "source": "llm"
+        },
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 55,
+          "title": "Données sensibles logguées en clair",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/8b2b544f87784c938087f46ec112ad09"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 2,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 146421,
+      "run_ms": 29869,
+      "total_ms": 176290,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/56",
+      "sha": "f147b34"
+    },
+    {
+      "id": "X5-exception-avalee",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 49,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "exception avalée (catch vide), succès affiché à tort",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Controller/ContractController.php",
+          "line": 58,
+          "title": "Exception avalée sans traitement",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/5043b5f84918421d8af5545853f709f3"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 186605,
+      "run_ms": 26290,
+      "total_ms": 212895,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/49",
+      "sha": "4407c7b"
+    },
+    {
+      "id": "X6-comparaison-hmac",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 44,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "signature comparée avec == au lieu de hash_equals()",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Service/WebhookVerifier.php",
+          "line": 15,
+          "title": "Comparaison de signature HMAC avec '==' au lieu de hash_equals()",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 1,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/f49a0030be214e1aaeef030173b5563d"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 106411,
+      "run_ms": 20637,
+      "total_ms": 127048,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/44",
+      "sha": "8c3d49a"
+    },
+    {
+      "id": "X7-unserialize",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "defect",
+      "pr": 59,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "unserialize() sur le corps de la requête",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Controller/ContractController.php",
+          "line": 47,
+          "title": "Utilisation de unserialize() sur une entrée externe",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 1,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/8244f777ec24422b8d124c8194745cbb"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 295487,
+      "run_ms": 25362,
+      "total_ms": 320849,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/59",
+      "sha": "7dd723c"
+    },
+    {
+      "id": "X8-logique-sans-test",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "defect",
+      "pr": 52,
+      "status": "ok",
+      "verdict": "A_VERIFIER",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "nouvelle logique métier sans test",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "major",
+          "path": "src/Service/PremiumCalculator.php",
+          "line": 35,
+          "title": "Nouvelle logique métier sans test",
+          "source": "llm"
+        }
+      ],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "neutral",
+        "title": "🟠 À vérifier — 1 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/8afec71804564ac7a9f612efe998b25b"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 236629,
+      "run_ms": 26118,
+      "total_ms": 262747,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/52",
+      "sha": "33cb857"
+    },
+    {
+      "id": "X9-dql-concatene",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "defect",
+      "pr": 42,
+      "status": "ok",
+      "verdict": "BLOQUANTE",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "A_VERIFIER",
+        "BLOQUANTE"
+      ],
+      "found": [
+        {
+          "label": "DQL construite par concaténation (injection)",
+          "found": true,
+          "by": [
+            "llm"
+          ],
+          "ai_expected": true
+        }
+      ],
+      "kept": [
+        {
+          "severity": "critical",
+          "path": "src/Repository/ContractRepository.php",
+          "line": 34,
+          "title": "Injection SQL via concaténation de paramètre utilisateur",
+          "source": "llm"
+        },
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci"
+        }
+      ],
+      "other_findings": [
+        {
+          "severity": "critical",
+          "path": "(intégration continue)",
+          "line": null,
+          "title": "CI en échec : tests",
+          "source": "ci",
+          "explanation": "Conclusion « failure ». Détail : https://github.com/test-agent-revue/project_test_3/actions/runs/43425086306/job/131884432696"
+        }
+      ],
+      "noise_major": 1,
+      "dropped": 1,
+      "check": {
+        "conclusion": "failure",
+        "title": "🔴 Bloquante — 2 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/4a78039b05a642589da1d44aba9d4eac"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 1,
+      "mail_sent": true,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 69405,
+      "run_ms": 25574,
+      "total_ms": 94979,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/42",
+      "sha": "a36291f"
+    },
+    {
+      "id": "K1-doc-readme",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "clean",
+      "pr": 57,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/73b5d1f37a8a4294988973ada76c444e"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 69326,
+      "run_ms": 67440,
+      "total_ms": 136766,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/57",
+      "sha": "5a3fd48"
+    },
+    {
+      "id": "K2-couleur-css",
+      "repo": "test-agent-revue/project_test_2",
+      "kind": "clean",
+      "pr": 54,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/d68fc65ed43e4269819c65b05f2a567c"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 212759,
+      "run_ms": 19933,
+      "total_ms": 232692,
+      "chunks": 1,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/54",
+      "sha": "d791ac1"
+    },
+    {
+      "id": "K3-constantes-arrondi",
+      "repo": "test-agent-revue/project_test_3",
+      "kind": "clean",
+      "pr": 46,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/2b1f7c4455c64066b87a0bf62a730211"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 204430,
+      "run_ms": 30099,
+      "total_ms": 234529,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/46",
+      "sha": "8623722"
+    },
+    {
+      "id": "K4-test-supplementaire",
+      "repo": "test-agent-revue/project_test_1",
+      "kind": "clean",
+      "pr": 52,
+      "status": "ok",
+      "verdict": "CONTROLES_SATISFAITS",
+      "verdict_ok": true,
+      "expected_verdicts": [
+        "CONTROLES_SATISFAITS",
+        "A_VERIFIER"
+      ],
+      "found": [],
+      "kept": [],
+      "other_findings": [],
+      "noise_major": 0,
+      "dropped": 0,
+      "check": {
+        "conclusion": "success",
+        "title": "🟢 Contrôles satisfaits — 0 remarque(s)",
+        "details_url": "http://localhost:8020/ui/runs/8a4150151b194fada4323c44c2428563"
+      },
+      "check_ok": true,
+      "review_state": "COMMENTED",
+      "inline_comments": 0,
+      "mail_sent": false,
+      "mail_ok": true,
+      "cost_usd": null,
+      "model": "qwen3-14b-awq/chat",
+      "queue_ms": 484,
+      "run_ms": 37821,
+      "total_ms": 38305,
+      "chunks": 2,
+      "chunks_failed": 0,
+      "incomplete_reasons": [],
+      "error": null,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/52",
+      "sha": "5b0fb6c"
+    }
+  ],
+  "secret_leaks": {
+    "crm_li…": 0,
+    "Rct-20…": 0
+  },
+  "workers": 3
+}

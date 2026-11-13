@@ -24,6 +24,7 @@ export interface Finding {
   suggestion: string;
   source: string;
   chunk: number | null;
+  reviewer?: string;
   excerpt: ExcerptLine[];
   kept?: boolean | null;
   drop_reason?: string | null;

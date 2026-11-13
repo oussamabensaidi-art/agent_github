@@ -43,10 +43,12 @@ function Chunk({ c, x, y, compact, now }: { c: ChunkView; x: number; y: number; 
       : c.status === "failed" ? "échec"
         : c.status === "done" ? `${c.findings ?? 0} rem. · ${duration(c.duration)}`
           : "en attente";
-  const label = c.files.length === 1 ? c.files[0].split("/").pop() : `${c.files.length} fichiers`;
+  const what = c.files.length === 1 ? c.files[0].split("/").pop() : `${c.files.length} fichiers`;
+  const label = c.reviewerLabel ? `${c.reviewerLabel} · ${what}` : what;
   return (
     <g className={`g-chunk g-chunk-${c.status}`} transform={`translate(${x},${y})`}>
-      <title>{`Lot ${c.index} — ${c.files.join(", ")} (${c.chars} caractères)`}</title>
+      <title>{`${c.reviewerLabel ? `Relecteur ${c.reviewerLabel}` : "Lot"} ${c.index} — ${c.files.join(", ")}`
+        + `${c.skills && c.skills.length ? ` · compétences : ${c.skills.join(", ")}` : ""} (${c.chars} caractères)`}</title>
       <rect width={FAN_W} height={24} rx={12} />
       {c.status === "running" && <rect className="g-chunk-sweep" width={FAN_W} height={24} rx={12} />}
       <text x={12} y={16} className="g-chunk-index">{String(c.index).padStart(2, "0")}</text>
@@ -144,7 +146,7 @@ export function PipelineGraph({ view, now }: { view: RunView; now: number }) {
         })}
         {chunks.length > 0 && (
           <text x={FAN_X + FAN_W / 2} y={top - 12} textAnchor="middle" className="g-fan-label">
-            {`${chunks.length} lot${chunks.length > 1 ? "s" : ""} · ${view.concurrency ?? "?"} en parallèle`}
+            {`${chunks.length} ${chunks.some((c) => c.reviewer) ? "passage" : "lot"}${chunks.length > 1 ? "s" : ""} · ${view.concurrency ?? "?"} en parallèle`}
           </text>
         )}
 

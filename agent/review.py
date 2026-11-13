@@ -106,6 +106,7 @@ class Finding:
     inline: bool = True  # False : la ligne n'est pas dans le diff → résumé seulement
     id: str = ""
     chunk: int | None = None
+    reviewer: str = ""     # relecteur spécialisé qui l'a émise (vide : généraliste ou outil)
 
     @property
     def deterministic(self) -> bool:
@@ -154,6 +155,13 @@ def validate_findings_detailed(
     # Lignes déjà signalées par le scanner de secrets : le modèle y voit
     # "[SECRET MASQUÉ]" et la recommente malgré la consigne (constaté avec le 7b).
     secret_lines = {(f.path, f.line) for f in findings if f.source == "secret-scan"}
+    # Deux relecteurs sur la même ligne, même catégorie : on garde la remarque la plus grave.
+    best: dict[tuple, Finding] = {}
+    for f in findings:
+        if f.source == "llm" and f.line is not None:
+            key = (f.path, f.line, f.category)
+            if key not in best or rank(f.severity) > rank(best[key].severity):
+                best[key] = f
     any_secret_lines = {(f.path, f.line) for f in findings if f.source in SECRET_SOURCES}
     for f in findings:
         if f.severity not in SEVERITIES or not f.title:
@@ -161,6 +169,10 @@ def validate_findings_detailed(
             continue
         if f.source == "llm" and rank(f.severity) < rank(min_severity):
             dropped.append((f, "sous le seuil de gravité"))
+            continue
+        winner = best.get((f.path, f.line, f.category)) if f.source == "llm" and f.line is not None else None
+        if winner is not None and winner is not f and winner.reviewer != f.reviewer:
+            dropped.append((f, "doublon d'un autre relecteur (même ligne, même catégorie)"))
             continue
         if ((f.source == "llm" and (f.path, f.line) in any_secret_lines)
                 or (f.source == "gitleaks" and (f.path, f.line) in secret_lines)):

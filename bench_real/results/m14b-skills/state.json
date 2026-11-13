@@ -1,0 +1,248 @@
+{
+  "tag": "m14b-skills",
+  "cases": {
+    "D1-sql-injection": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/D1-sql-injection",
+      "sha": "c5213f7ec7333b51fc6ced7feae084447b00eca5",
+      "pr": 53,
+      "opened_at": 1794572751.7624135,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/53"
+    },
+    "D2-acces-suppression": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/D2-acces-suppression",
+      "sha": "68abb95c7c523b51c5342469f53be8d5eee8b6f9",
+      "pr": 58,
+      "opened_at": 1794572751.843366,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/58"
+    },
+    "D3-dump-oublie": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/D3-dump-oublie",
+      "sha": "49bc458abd157263b7e0a65f8c0adcee5b32ca9a",
+      "pr": 55,
+      "opened_at": 1794572752.4946396,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/55"
+    },
+    "D4-secret-en-dur": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/D4-secret-en-dur",
+      "sha": "38712128e4a6706bfd6f5f96559d374b2921e87e",
+      "pr": 51,
+      "opened_at": 1794572752.2092519,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/51"
+    },
+    "D5-montant-flottant": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/D5-montant-flottant",
+      "sha": "34dd8308c54d77c000bb62a58ddd5b3b85acc43e",
+      "pr": 47,
+      "opened_at": 1794572752.2093973,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/47"
+    },
+    "D6-reference-dupliquee": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/D6-reference-dupliquee",
+      "sha": "8086d20d46fec1d11c9e37241f7ee3e88ceab70f",
+      "pr": 48,
+      "opened_at": 1794572752.2906773,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/48"
+    },
+    "D7-xss-raw": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/D7-xss-raw",
+      "sha": "9ba2a512d1daf715f08d76571fe9174d1811b1bb",
+      "pr": 61,
+      "opened_at": 1794572752.3423076,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/61"
+    },
+    "D8-secret-description": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/D8-secret-description",
+      "sha": "50797385067510430eb38f9f6c331a8df4cb7edb",
+      "pr": 43,
+      "opened_at": 1794572751.6894226,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/43"
+    },
+    "C1-export-csv": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/C1-export-csv",
+      "sha": "eb135659f395ba8d21fcca2262269562886bad59",
+      "pr": 47,
+      "opened_at": 1794572751.6597512,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/47"
+    },
+    "C2-liste-pluriel": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/C2-liste-pluriel",
+      "sha": "cd907731b310c6a80f80a4afb3bbf61ae9a0372e",
+      "pr": 45,
+      "opened_at": 1794572751.955442,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/45"
+    },
+    "C3-filtre-twig-money": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/C3-filtre-twig-money",
+      "sha": "29c630e37b87919456000a43d31592ebe8387702",
+      "pr": 62,
+      "opened_at": 1794572752.4938078,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/62"
+    },
+    "E1-gros-fichier": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/E1-gros-fichier",
+      "sha": "6a0fab690d175940107fe87f57129cc873c58312",
+      "pr": 50,
+      "opened_at": 1794572752.222178,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/50"
+    },
+    "S1-phpstan-methode": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/S1-phpstan-methode",
+      "sha": "7e877a09a2665df6d148bfcf63fdf48d1a383269",
+      "pr": 60,
+      "opened_at": 1794572752.6767976,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/60"
+    },
+    "S2-ci-en-echec": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/S2-ci-en-echec",
+      "sha": "a26d0b274b1999c24640405cdd8801e5825d1db5",
+      "pr": 53,
+      "opened_at": 1794572752.290763,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/53"
+    },
+    "S3-dependance-vulnerable": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/S3-dependance-vulnerable",
+      "sha": "f5ccdd2d5a138572441282beb8d9f09bec195069",
+      "pr": 49,
+      "opened_at": 1794572752.4120698,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/49"
+    },
+    "S4-style": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/S4-style",
+      "sha": "953c2001b8fe8fec1fc0f96f1cb83ef1ce69655f",
+      "pr": 55,
+      "opened_at": 1794572751.6173368,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/55"
+    },
+    "S5-propre-php": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/S5-propre-php",
+      "sha": "61d2fbd60c9a1b60d60fb1b39dd4cf87547ce2c5",
+      "pr": 48,
+      "opened_at": 1794572752.0165482,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/48"
+    },
+    "X1-redirection-ouverte": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/X1-redirection-ouverte",
+      "sha": "2410782bfa30c0e0c4406d4afc53e32b9d5340f7",
+      "pr": 54,
+      "opened_at": 1794572751.659678,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/54"
+    },
+    "X2-csrf-retire": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/X2-csrf-retire",
+      "sha": "1888ffb98dada58d433971364e2be27d2ae4f7a3",
+      "pr": 56,
+      "opened_at": 1794572753.1696606,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/56"
+    },
+    "X3-droit-abaisse": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/X3-droit-abaisse",
+      "sha": "ef5d1e52952ac10764ae3a78f8604e2123ce559e",
+      "pr": 50,
+      "opened_at": 1794572752.603315,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/50"
+    },
+    "X4-donnees-dans-les-logs": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/X4-donnees-dans-les-logs",
+      "sha": "f147b34a9f2f2ab1f087763e812b0ea2f5668558",
+      "pr": 56,
+      "opened_at": 1794572751.6867092,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/56"
+    },
+    "X5-exception-avalee": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/X5-exception-avalee",
+      "sha": "4407c7b9fdbc98f921ec0d74d38acf6f3fd7462a",
+      "pr": 49,
+      "opened_at": 1794572752.0917199,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/49"
+    },
+    "X6-comparaison-hmac": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/X6-comparaison-hmac",
+      "sha": "8c3d49ac80656128095269ebdc267ca52329cd0a",
+      "pr": 44,
+      "opened_at": 1794572751.6737764,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/44"
+    },
+    "X7-unserialize": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/X7-unserialize",
+      "sha": "7dd723c2db0036843fda119979e8142318e12aed",
+      "pr": 59,
+      "opened_at": 1794572751.907291,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/59"
+    },
+    "X8-logique-sans-test": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/X8-logique-sans-test",
+      "sha": "33cb857d651b0ffd25c9353c92b103146494a1e5",
+      "pr": 52,
+      "opened_at": 1794572752.30747,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/52"
+    },
+    "X9-dql-concatene": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/X9-dql-concatene",
+      "sha": "a36291f68c7d9573ca672c1301450074d01a9791",
+      "pr": 42,
+      "opened_at": 1794572751.4510808,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/42"
+    },
+    "K1-doc-readme": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/K1-doc-readme",
+      "sha": "5a3fd48fae5efd2e93226022ab8044280c7de2f9",
+      "pr": 57,
+      "opened_at": 1794572751.822686,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/57"
+    },
+    "K2-couleur-css": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/m14b-skills/K2-couleur-css",
+      "sha": "d791ac1cee7a6b7d1331f84eccec9991cbf3ac56",
+      "pr": 54,
+      "opened_at": 1794572752.3942602,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/54"
+    },
+    "K3-constantes-arrondi": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/m14b-skills/K3-constantes-arrondi",
+      "sha": "8623722836a0b106c96acedfd1fd43332e3d08eb",
+      "pr": 46,
+      "opened_at": 1794572752.0274143,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/46"
+    },
+    "K4-test-supplementaire": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/m14b-skills/K4-test-supplementaire",
+      "sha": "5b0fb6c0841a889184b2ad130264248b3119db4a",
+      "pr": 52,
+      "opened_at": 1794572751.5669568,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/52"
+    }
+  },
+  "launched_at": 1794572747.665051,
+  "launch_spread_s": 5.5,
+  "workers": 3
+}

@@ -13,6 +13,9 @@ export interface ChunkView {
   files: string[];
   chars: number;
   status: "queued" | "running" | "done" | "failed";
+  reviewer?: string;
+  reviewerLabel?: string;
+  skills?: string[];
   started?: number;
   finished?: number;
   duration?: number;
@@ -112,7 +115,10 @@ export function applyEvent(v: RunView, ev: RunEvent): RunView {
     case "chunks_planned":
       return {
         ...n, concurrency: d.concurrency,
-        chunks: (d.chunks || []).map((c: any) => ({ index: c.index, files: c.files, chars: c.chars, status: "queued" })),
+        chunks: (d.chunks || []).map((c: any) => ({
+          index: c.index, files: c.files, chars: c.chars, status: "queued",
+          reviewer: c.reviewer || undefined, reviewerLabel: c.reviewer_label || undefined, skills: c.skills || [],
+        })),
       };
     case "chunk_started":
       return { ...n, chunks: n.chunks.map((c) => (c.index === d.index ? { ...c, status: "running", started: ev.ts } : c)) };

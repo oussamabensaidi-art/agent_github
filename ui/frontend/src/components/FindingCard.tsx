@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api, jsonBody } from "../api";
-import { DETERMINISTIC, SOURCE_LABEL } from "../format";
+import { DETERMINISTIC, REVIEWER_LABEL, SOURCE_LABEL } from "../format";
 import type { Finding, Rating } from "../types";
 import { Icon, SeverityChip } from "./ui";
 
@@ -62,6 +62,7 @@ export function FindingCard({ finding: f, runId, canRate, pilot = true, onRated,
         <SeverityChip severity={f.severity} />
         {advisory && <span className="tag tag-soft" title="Mode pilote : l'IA ne peut pas bloquer seule">avis IA</span>}
         <span className={`tag ${DETERMINISTIC.has(f.source) ? "tag-det" : ""}`}>{SOURCE_LABEL[f.source] || f.source}</span>
+        {f.reviewer && <span className="tag tag-soft">{REVIEWER_LABEL[f.reviewer] || f.reviewer}</span>}
         <span className="tag tag-ghost">{f.category}</span>
         <code className="finding-where">{f.path}{f.line ? `:${f.line}` : ""}</code>
       </header>

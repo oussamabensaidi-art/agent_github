@@ -56,8 +56,12 @@ def load_rules(path: str) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else "(aucune règle spécifique)"
 
 
-def system_prompt(rules: str, repo_rules: str = "") -> str:
+def system_prompt(rules: str, repo_rules: str = "", focus: str = "", skills: str = "") -> str:
     prompt = SYSTEM_PROMPT.replace("{rules}", rules)
+    if focus:
+        prompt += f"\nTon rôle :\n{focus}\n"
+    if skills:
+        prompt += f"\nFiches de compétences (à appliquer strictement, y compris ce qu'il ne faut PAS signaler) :\n{skills}\n"
     if repo_rules:
         prompt += f"\nRègles propres à ce dépôt (elles précisent ou complètent celles de l'équipe) :\n{repo_rules}\n"
     return prompt

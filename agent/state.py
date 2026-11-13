@@ -71,3 +71,4 @@ class Services:
     controls: Any = None   # .publishing_enabled() -> bool (interrupteur, lu à chaque écriture)
     events: Any = None     # journal d'événements (store.EventSink)
     checker: Any = None    # agent.checks.CheckerClient (None : contrôles statiques désactivés)
+    skills: Any = None     # list[agent.skills.Skill] (None : chargées depuis SKILLS_DIR)

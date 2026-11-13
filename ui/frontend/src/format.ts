@@ -114,6 +114,11 @@ export const SOURCE_LABEL: Record<string, string> = {
   ci: "CI du dépôt",
 };
 
+export const REVIEWER_LABEL: Record<string, string> = {
+  securite: "relecteur sécurité",
+  code: "relecteur code & Symfony",
+};
+
 /** Sources déterministes (ne dépendent pas d'un modèle) : peuvent bloquer en mode pilote. */
 export const DETERMINISTIC = new Set(["secret-scan", "gitleaks", "composer-audit", "phpstan", "php-cs-fixer", "ci"]);
 

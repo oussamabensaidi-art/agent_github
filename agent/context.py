@@ -17,7 +17,23 @@ import re
 from agent.secrets_scan import redact_text
 
 CLASS_RE = re.compile(r"^\s*(?:(?:abstract|final|readonly)\s+)*(?:class|interface|trait|enum)\s+\w+")
+CTOR_RE = re.compile(r"function\s+__construct\s*\(")
 HEADER_MAX_LINES = 80
+CTOR_MAX_LINES = 200
+
+
+def constructor_signature(source: str, max_lines: int = 14) -> str:
+    """Signature du constructeur (propriétés promues = dépendances injectées), sans son corps."""
+    lines = source.splitlines()[:CTOR_MAX_LINES]
+    for i, line in enumerate(lines):
+        if CTOR_RE.search(line):
+            out = []
+            for sig in lines[i:i + max_lines]:
+                out.append(sig.rstrip())
+                if ")" in sig and ("{" in sig or sig.rstrip().endswith(")")):
+                    break
+            return redact_text("\n".join(out))[0]
+    return ""
 
 
 def file_header(source: str, max_chars: int = 1200) -> str:
@@ -41,6 +57,9 @@ def file_header(source: str, max_chars: int = 1200) -> str:
             text = "\n".join(kept)
             if len(text) > max_chars:   # trop d'imports : on garde la fin (attributs + classe)
                 text = "…\n" + text[-max_chars:].split("\n", 1)[-1]
+            ctor = constructor_signature(source)
+            if ctor:
+                text += "\n    // …\n" + ctor
             return redact_text(text)[0]
     return ""
 
