@@ -72,6 +72,28 @@ VERDICT_RULES_VERSION = "verdict-v3"  # v3 : contrôles statiques et CI comme so
 PR_TEXT_PATH = "(titre / description de la PR)"
 
 MARKER = "<!-- calipso-pr-review -->"
+# Revue d'un commit précédent, déjà nettoyée : ne contient plus MARKER, donc n'est plus retraitée.
+MARKER_REPLACED = "<!-- calipso-pr-review:remplacee -->"
+
+
+def is_previous_agent_review(review: dict, keep_id: int | None) -> bool:
+    """Revue publiée par l'agent, encore active, autre que celle qu'on vient de publier."""
+    return MARKER in (review.get("body") or "") and review.get("id") != keep_id
+
+
+def replaced_review_body(old_body: str, new_sha: str, removed_comments: int, details_url: str = "") -> str:
+    """Texte qui remplace une ancienne revue : garde son verdict pour l'historique."""
+    old_title = next((line.removeprefix("## Revue automatique — ").strip()
+                      for line in old_body.splitlines() if line.startswith("## Revue automatique")), "")
+    rows = [MARKER_REPLACED,
+            f"↪️ **Revue remplacée** par l'analyse du commit `{new_sha[:7]}` (voir la revue plus récente)."]
+    if old_title:
+        rows.append(f"\nVerdict de cette analyse, désormais obsolète : {old_title}.")
+    if removed_comments:
+        rows.append(f"\n{removed_comments} commentaire(s) en ligne de cette revue ont été retirés.")
+    if details_url:
+        rows.append(f"\n[Détail de l'analyse]({details_url})")
+    return "\n".join(rows)
 
 CHECK_LABEL = {"gitleaks": "gitleaks (secrets)", "composer-audit": "composer audit (dépendances)",
                "phpstan": "PHPStan (analyse statique)", "php-cs-fixer": "PHP-CS-Fixer (style)",

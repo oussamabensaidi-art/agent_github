@@ -162,6 +162,28 @@ class GitHubClient:
             body["target_url"] = details_url
         await self._req("POST", f"/repos/{repo}/statuses/{sha}", json=body)
 
+    async def _paginate(self, url: str) -> list[dict]:
+        items, page = [], 1
+        while True:
+            batch = (await self._req("GET", url, params={"per_page": 100, "page": page})).json()
+            items += batch
+            if len(batch) < 100:
+                return items
+            page += 1
+
+    async def list_reviews(self, repo: str, number: int) -> list[dict]:
+        return await self._paginate(f"/repos/{repo}/pulls/{number}/reviews")
+
+    async def list_review_comments(self, repo: str, number: int, review_id: int) -> list[dict]:
+        return await self._paginate(f"/repos/{repo}/pulls/{number}/reviews/{review_id}/comments")
+
+    async def update_review(self, repo: str, number: int, review_id: int, body: str) -> None:
+        """Remplace le texte d'une revue déjà envoyée (GitHub ne permet pas de la supprimer)."""
+        await self._req("PUT", f"/repos/{repo}/pulls/{number}/reviews/{review_id}", json={"body": _cut(body)})
+
+    async def delete_review_comment(self, repo: str, comment_id: int) -> None:
+        await self._req("DELETE", f"/repos/{repo}/pulls/comments/{comment_id}")
+
     async def create_review(self, repo: str, number: int, sha: str, body: str,
                             comments: list[dict], fallback_body: str) -> dict:
         """Revue COMMENT avec commentaires inline.

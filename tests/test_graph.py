@@ -24,6 +24,26 @@ class FakeGitHub:
         ]
         self.head, self.fail_files = head, fail_files
         self.reviews, self.statuses = [], []
+        # Revues déjà présentes sur la PR (analyses précédentes, humains) et leurs commentaires en ligne.
+        self.existing: list[dict] = []
+        self.review_comments: dict[int, list[dict]] = {}
+        self.updated: dict[int, str] = {}
+        self.deleted_comments: list[int] = []
+        self.fail_listing = False
+
+    async def list_reviews(self, repo, number):
+        if self.fail_listing:
+            raise RuntimeError("API down")
+        return self.existing + [{"id": 1000 + i, "body": r["body"]} for i, r in enumerate(self.reviews)]
+
+    async def list_review_comments(self, repo, number, review_id):
+        return self.review_comments.get(review_id, [])
+
+    async def update_review(self, repo, number, review_id, body):
+        self.updated[review_id] = body
+
+    async def delete_review_comment(self, repo, comment_id):
+        self.deleted_comments.append(comment_id)
 
     async def get_pr(self, repo, number):
         return {"head": {"sha": self.head}, "state": "open", "title": "Ajout repo",
@@ -44,7 +64,7 @@ class FakeGitHub:
 
     async def create_review(self, repo, number, sha, body, comments, fallback_body):
         self.reviews.append({"body": body, "comments": comments})
-        return {}
+        return {"id": 1000 + len(self.reviews) - 1}
 
 
 class FakeLLM:
@@ -162,3 +182,64 @@ async def test_dry_run_publishes_nothing(tmp_path):
     result = await run_review(JOB, s)
     assert result["verdict"] == "BLOQUANTE"
     assert s.github.reviews == [] and s.github.statuses == [] and s.mailer.sent == []
+
+
+# --- Nettoyage des remarques des analyses précédentes ---------------------------------
+
+OLD_AGENT_REVIEW = {"id": 7, "body": "<!-- calipso-pr-review -->\n## Revue automatique — 🟠 À vérifier\n..."}
+HUMAN_REVIEW = {"id": 8, "body": "Merci, mais renomme la variable stp."}
+ALREADY_REPLACED = {"id": 9, "body": "<!-- calipso-pr-review:remplacee -->\n↪️ Revue remplacée"}
+
+
+async def test_new_analysis_cleans_previous_agent_reviews_only(tmp_path):
+    gh = FakeGitHub()
+    gh.existing = [OLD_AGENT_REVIEW, HUMAN_REVIEW, ALREADY_REPLACED]
+    gh.review_comments = {7: [{"id": 70}, {"id": 71}], 8: [{"id": 80}], 9: [{"id": 90}]}
+    s = make(tmp_path, github=gh)
+
+    result = await run_review(JOB, s)
+
+    assert result["published"] is True and len(gh.reviews) == 1
+    # Ancienne revue de l'agent : commentaires en ligne retirés, texte remplacé, verdict gardé.
+    assert gh.deleted_comments == [70, 71]
+    assert list(gh.updated) == [7]
+    body = gh.updated[7]
+    assert body.startswith("<!-- calipso-pr-review:remplacee -->") and "<!-- calipso-pr-review -->" not in body
+    assert SHA[:7] in body and "🟠 À vérifier" in body and "2 commentaire(s)" in body
+    # Jamais la revue d'un humain, ni une revue déjà nettoyée, ni la revue qu'on vient de publier.
+    assert 8 not in gh.updated and 80 not in gh.deleted_comments
+    assert 9 not in gh.updated and 90 not in gh.deleted_comments
+    assert 1000 not in gh.updated
+
+
+async def test_cleanup_failure_never_fails_the_review(tmp_path):
+    gh = FakeGitHub()
+    gh.fail_listing = True
+    s = make(tmp_path, github=gh)
+
+    result = await run_review(JOB, s)
+
+    assert not result.get("error") and result["published"] is True
+    assert gh.statuses[-1][0] == result["verdict"]
+
+
+async def test_cleanup_can_be_disabled(tmp_path):
+    gh = FakeGitHub()
+    gh.existing = [OLD_AGENT_REVIEW]
+    gh.review_comments = {7: [{"id": 70}]}
+    s = make(tmp_path, github=gh, CLEAN_PREVIOUS_REVIEWS=False)
+
+    await run_review(JOB, s)
+
+    assert gh.updated == {} and gh.deleted_comments == []
+
+
+async def test_dry_run_touches_no_previous_review(tmp_path):
+    gh = FakeGitHub()
+    gh.existing = [OLD_AGENT_REVIEW]
+    gh.review_comments = {7: [{"id": 70}]}
+    s = make(tmp_path, github=gh, DRY_RUN=True)
+
+    await run_review(JOB, s)
+
+    assert gh.updated == {} and gh.deleted_comments == []

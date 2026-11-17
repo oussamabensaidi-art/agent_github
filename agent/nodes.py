@@ -21,7 +21,8 @@ from agent.events import emit
 from agent.notify import build_alert
 from agent.review import (
     CHECK_CONCLUSION, OUTCOME_FAILED, OUTCOME_SUPERSEDED, STATUS_STATE, VERDICT_BLOCKING, VERDICT_TEXT,
-    Finding, compute_verdict, finding_from_llm, render_comment, render_summary, validate_findings_detailed,
+    Finding, compute_verdict, finding_from_llm, is_previous_agent_review, render_comment, render_summary,
+    replaced_review_body, validate_findings_detailed,
 )
 from agent.secrets_scan import redact_text, scan_and_redact, scan_pr_text
 from agent.state import ReviewState, Services
@@ -327,8 +328,10 @@ async def publish(state: ReviewState, config) -> dict:
     fallback = render_summary(state["verdict"], findings, 0, state.get("skipped", []),
                               state.get("incomplete_reasons", []), s.llm.model, state["head_sha"],
                               s.rules_version, pilot, details_url(s, state))
-    await s.github.create_review(state["repo"], state["pr_number"], state["head_sha"],
-                                 state["summary"], comments, fallback)
+    review = await s.github.create_review(state["repo"], state["pr_number"], state["head_sha"],
+                                          state["summary"], comments, fallback)
+    if s.settings.CLEAN_PREVIOUS_REVIEWS:
+        await clean_previous_reviews(s, state, (review or {}).get("id"))
     verdict = state["verdict"]
     await s.github.finish_status(
         state["repo"], state["head_sha"], s.settings.CHECK_NAME, state.get("check_id"),
@@ -340,6 +343,40 @@ async def publish(state: ReviewState, config) -> dict:
          github_state=CHECK_CONCLUSION[verdict] if use_checks else STATUS_STATE[verdict],
          mode="check run" if use_checks else "statut de commit")
     return {"published": True}
+
+
+async def clean_previous_reviews(s: Services, state: ReviewState, keep_id: int | None) -> None:
+    """Retire les remarques des analyses précédentes de l'agent sur cette PR.
+
+    Appelé APRÈS la publication de la nouvelle revue : si le nettoyage échoue,
+    la PR garde au pire des doublons, jamais aucune remarque. Seules les revues
+    portant le marqueur de l'agent sont touchées (jamais celles des humains) :
+    leurs commentaires en ligne sont supprimés et leur texte est remplacé par un
+    renvoi vers la revue à jour (GitHub ne permet pas de supprimer une revue envoyée).
+    Une erreur ici est journalisée et ne fait jamais échouer l'analyse.
+    """
+    repo, number = state["repo"], state["pr_number"]
+    reviews_done = comments_done = 0
+    try:
+        for r in await s.github.list_reviews(repo, number):
+            if not is_previous_agent_review(r, keep_id):
+                continue
+            removed = 0
+            for c in await s.github.list_review_comments(repo, number, r["id"]):
+                await s.github.delete_review_comment(repo, c["id"])
+                removed += 1
+            await s.github.update_review(repo, number, r["id"],
+                                         replaced_review_body(r.get("body") or "", state["head_sha"], removed,
+                                                              details_url(s, state)))
+            reviews_done += 1
+            comments_done += removed
+    except Exception as e:  # noqa: BLE001 — le nettoyage ne doit jamais faire échouer la revue
+        log.warning("nettoyage des revues précédentes incomplet : %s", e)
+        emit("previous_reviews_cleanup_failed", error=redact_text(f"{type(e).__name__}: {e}")[0][:300],
+             reviews=reviews_done, comments=comments_done)
+        return
+    if reviews_done:
+        emit("previous_reviews_cleaned", reviews=reviews_done, comments=comments_done)
 
 
 @node()

@@ -229,17 +229,28 @@ Le faux GitHub applique les contrôles du vrai (JWT de l'App, jeton obligatoire,
 La pertinence des remarques du modèle sur #101 est **rapportée** (référence :
 injection SQL L20, `dump()` L21, contrôle d'accès L17), pas assertée.
 
+## File fiable et anciennes remarques
+
+- **File fiable** : un worker prend un job avec `BLMOVE` vers sa liste « en cours »
+  et ne l'en retire qu'à la fin de l'analyse. Un worker sans battement de cœur
+  (60 s) est considéré comme mort : ses jobs sont remis en tête de file, au plus
+  `QUEUE_MAX_ATTEMPTS` fois (3), puis partent en DLQ. Au démarrage, un worker
+  reprend aussi sa propre liste.
+- **DLQ** : `python -m jobqueue dlq` (lister), `python -m jobqueue replay [N]`
+  (relancer après correction de la cause), `python -m jobqueue purge` (vider).
+  Dans Docker : `docker compose exec worker python -m jobqueue dlq`.
+- **Anciennes remarques** (`CLEAN_PREVIOUS_REVIEWS=true`) : après publication de
+  la nouvelle revue, l'agent retire les commentaires en ligne de ses revues
+  précédentes sur la PR et remplace leur texte par un renvoi vers la revue à jour
+  (GitHub ne permet pas de supprimer une revue envoyée). Il ne touche jamais aux
+  revues des humains ; un échec du nettoyage ne fait jamais échouer l'analyse.
+
 ## Limites connues (à traiter dans les phases suivantes)
 
-- Une nouvelle revue est publiée à chaque nouveau commit analysé ; pas encore
-  de suppression des remarques déjà faites sur un commit précédent.
 - La CI est lue par sondage (`CI_POLL_SECONDS`) : une CI plus longue que
   `CI_WAIT_SECONDS` rend l'analyse incomplète.
 - PHPStan n'analyse que les fichiers PHP modifiés (avec l'autoload du projet) ;
   sans l'extension Symfony / Doctrine, certaines erreurs de types restent invisibles.
-- File simple (`LPUSH`/`BRPOP`) : si un worker meurt pendant une analyse, ce
-  job est perdu (pas de DLQ). Passer à une file fiable (`BLMOVE` vers une liste
-  « en cours » + reprise) avant la production.
 - Les auteurs ne sont pas joints par email : GitHub ne fournit pas leur adresse.
   L'alerte va à `ALERT_EMAILS`.
 - Interrupteur coupé **pendant** une analyse dont le check est déjà « en cours » :

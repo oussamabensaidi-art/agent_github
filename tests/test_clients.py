@@ -217,3 +217,26 @@ async def test_revoked_installation_token_is_refreshed_once():
         await gh.get_pr("o/r", 1)
     await gh.aclose()
     assert seen == ["Bearer ancien", "Bearer neuf", "Bearer ancien"]
+
+
+async def test_review_cleanup_endpoints_and_pagination():
+    calls = []
+
+    def handler(request: httpx.Request):
+        calls.append((request.method, request.url.path, dict(request.url.params)))
+        if request.method == "GET" and request.url.path.endswith("/reviews"):
+            page = int(request.url.params["page"])
+            return httpx.Response(200, json=[{"id": i} for i in range(100)] if page == 1 else [{"id": 100}])
+        if request.method == "PUT":
+            assert json.loads(request.content) == {"body": "remplacée"}
+        return httpx.Response(204 if request.method == "DELETE" else 200, json={})
+
+    gh = GitHubClient("tok", "https://api.github.com", use_checks=True, transport=httpx.MockTransport(handler))
+    reviews = await gh.list_reviews("o/r", 3)
+    await gh.update_review("o/r", 3, 7, "remplacée")
+    await gh.delete_review_comment("o/r", 70)
+    await gh.aclose()
+
+    assert len(reviews) == 101 and [c[2]["page"] for c in calls[:2]] == ["1", "2"]
+    assert ("PUT", "/repos/o/r/pulls/3/reviews/7", {}) in calls
+    assert ("DELETE", "/repos/o/r/pulls/comments/70", {}) in calls

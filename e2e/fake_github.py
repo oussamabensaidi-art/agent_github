@@ -26,6 +26,9 @@ TOKENS: set[str] = set()
 RECORDED: list[dict] = []
 VIOLATIONS: list[str] = []
 CHECK_IDS = iter(range(1000, 100000))
+IDS = iter(range(5000, 10**9))
+# Revues publiées par numéro de PR : {"id", "body", "commit_id", "comments": [{"id", ...}]}.
+REVIEWS: dict[int, list[dict]] = {}
 
 HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 
@@ -120,7 +123,54 @@ async def create_review(owner: str, name: str, number: int, request: Request,
             RECORDED.append({"op": "review_rejected_422", "pr": number, "comment": c})
             raise HTTPException(422, "Pull request review thread line must be part of the diff")
     RECORDED.append({"op": "review", "pr": number, **body})
-    return {"id": len(RECORDED)}
+    review = {"id": next(IDS), "body": body.get("body", ""), "commit_id": body.get("commit_id"),
+              "comments": [{"id": next(IDS), **c} for c in body.get("comments", [])]}
+    REVIEWS.setdefault(number, []).append(review)
+    return {"id": review["id"]}
+
+
+def review_or_404(number: int, review_id: int) -> dict:
+    for r in REVIEWS.get(number, []):
+        if r["id"] == review_id:
+            return r
+    raise HTTPException(404, "Not Found")
+
+
+@app.get("/repos/{owner}/{name}/pulls/{number}/reviews")
+async def list_reviews(owner: str, name: str, number: int, authorization: str | None = Header(None)):
+    auth(authorization)
+    pr_or_404(f"{owner}/{name}", number)
+    return [{k: v for k, v in r.items() if k != "comments"} for r in REVIEWS.get(number, [])]
+
+
+@app.get("/repos/{owner}/{name}/pulls/{number}/reviews/{review_id}/comments")
+async def list_review_comments(owner: str, name: str, number: int, review_id: int,
+                               authorization: str | None = Header(None)):
+    auth(authorization)
+    return review_or_404(number, review_id)["comments"]
+
+
+@app.put("/repos/{owner}/{name}/pulls/{number}/reviews/{review_id}")
+async def update_review(owner: str, name: str, number: int, review_id: int, request: Request,
+                        authorization: str | None = Header(None)):
+    auth(authorization)
+    review = review_or_404(number, review_id)
+    review["body"] = (await request.json())["body"]
+    RECORDED.append({"op": "review_update", "pr": number, "id": review_id, "body": review["body"]})
+    return {"id": review_id, "body": review["body"]}
+
+
+@app.delete("/repos/{owner}/{name}/pulls/comments/{comment_id}", status_code=204)
+async def delete_review_comment(owner: str, name: str, comment_id: int, authorization: str | None = Header(None)):
+    auth(authorization)
+    for number, reviews in REVIEWS.items():
+        for r in reviews:
+            for c in r["comments"]:
+                if c["id"] == comment_id:
+                    r["comments"].remove(c)
+                    RECORDED.append({"op": "review_comment_delete", "pr": number, "id": comment_id})
+                    return None
+    raise HTTPException(404, "Not Found")
 
 
 # --- Routes de contrôle du banc (avant le catch-all) ---
@@ -133,6 +183,7 @@ async def recorded():
 async def reset():
     RECORDED.clear()
     VIOLATIONS.clear()
+    REVIEWS.clear()
     return {"ok": True}
 
 

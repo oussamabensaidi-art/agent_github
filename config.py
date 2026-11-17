@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     QUEUE_KEY: str = "prreview:queue"
     DLQ_KEY: str = "prreview:dlq"
+    # Interruptions tolérées (worker arrêté pendant l'analyse) avant d'abandonner le job en DLQ.
+    QUEUE_MAX_ATTEMPTS: int = 3
+    # Nouvelle analyse d'une PR : retirer les commentaires en ligne des analyses précédentes de l'agent
+    # et remplacer le texte de leurs revues par un renvoi vers la revue à jour.
+    CLEAN_PREVIOUS_REVIEWS: bool = True
     DEDUP_TTL_SECONDS: int = 86400
 
     # --- Fournisseur du modèle : "ollama", "qwen3api" (API LLM Calipso) ou "openrouter" (banc) ---
