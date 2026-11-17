@@ -55,15 +55,18 @@ export function FindingCard({ finding: f, runId, canRate, pilot = true, onRated,
     }
   }
 
-  const advisory = pilot && f.source === "llm" && f.severity === "critical";
+  // Une seule étiquette « qui l'a trouvé » : relecteur IA (avis) ou contrôle automatique (fiable).
+  const isAi = f.source === "llm";
+  const who = isAi ? (REVIEWER_LABEL[f.reviewer || ""] || "IA") : (SOURCE_LABEL[f.source] || f.source);
   return (
     <article className={`finding ${dropped ? "finding-dropped" : ""} ${pending ? "finding-pending" : ""} ${animate ? "finding-in" : ""}`}>
       <header className="finding-head">
         <SeverityChip severity={f.severity} />
-        {advisory && <span className="tag tag-soft" title="Mode pilote : l'IA ne peut pas bloquer seule">avis IA</span>}
-        <span className={`tag ${DETERMINISTIC.has(f.source) ? "tag-det" : ""}`}>{SOURCE_LABEL[f.source] || f.source}</span>
-        {f.reviewer && <span className="tag tag-soft">{REVIEWER_LABEL[f.reviewer] || f.reviewer}</span>}
-        <span className="tag tag-ghost">{f.category}</span>
+        <span className={`tag ${DETERMINISTIC.has(f.source) ? "tag-det" : "tag-soft"}`}
+          title={isAi ? `Catégorie : ${f.category}${pilot ? " · mode pilote : un avis, ne bloque pas seul" : ""}`
+            : "Contrôle automatique : résultat fiable, peut bloquer la PR"}>
+          {who}{isAi && pilot ? " · avis" : ""}
+        </span>
         <code className="finding-where">{f.path}{f.line ? `:${f.line}` : ""}</code>
       </header>
       <h3 className="finding-title">{f.title}</h3>

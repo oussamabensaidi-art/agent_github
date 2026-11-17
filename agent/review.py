@@ -235,6 +235,59 @@ def render_comment(f: Finding, pilot_mode: bool = True) -> str:
     return "\n\n".join(parts)
 
 
+def _page_change(p: dict) -> str:
+    before, after = p.get("before") or {}, p.get("after") or {}
+    if not after.get("image"):
+        return "⚠️ page non affichée avec la PR" + (f" ({_neutralize(after.get('error') or '')[:80]})"
+                                                     if after.get("error") else "")
+    if (after.get("status") or 0) >= 500:
+        return f"⚠️ erreur {after['status']} avec la PR"
+    if not before.get("image") or before.get("status") == 404:
+        return "nouvelle page (absente avant)"
+    pct = p.get("diff_pct")
+    if pct is None:
+        return "—"
+    return "aucun changement visible" if pct == 0 else f"{pct:g} % de la page a changé"
+
+
+PREVIEW_CAVEAT = ("Aide à la relecture, indicative : seules quelques pages sont ouvertes, avec un compte de test "
+                  "et des données fictives ; la comparaison peut se tromper et les suggestions de l'IA aussi. "
+                  "Elle ne remplace pas un test à la main et n'a aucun effet sur le verdict.")
+
+
+def preview_rows(preview: dict | None, details_url: str = "") -> list[str]:
+    """Section « Aperçu avant / après » du résumé (les images restent dans l'interface :
+    l'API GitHub ne permet pas de joindre une image à une revue)."""
+    if not preview or preview.get("status") in (None, "off"):
+        return []
+    rows = ["", "### Aperçu avant / après"]
+    pages, unchanged = preview.get("pages") or [], preview.get("unchanged") or []
+    if not pages and not unchanged:
+        rows += ["", f"Pas d'aperçu : {_neutralize(preview.get('message') or 'non disponible')}."]
+        return rows
+    rows += ["", f"> {PREVIEW_CAVEAT}"]
+    if pages:
+        rows += ["", "**Ce qui change dans l'application :**"]
+        for p in pages:
+            c = p.get("change") or {}
+            rows.append(f"- `{_neutralize(p.get('path', ''))}` — {_neutralize(c.get('summary') or _page_change(p))}")
+            if c.get("text_added"):
+                rows.append("  - ajouté : " + " · ".join(f"« {_neutralize(t)[:80]} »" for t in c["text_added"][:4]))
+            if c.get("text_removed"):
+                rows.append("  - retiré : " + " · ".join(f"« {_neutralize(t)[:80]} »" for t in c["text_removed"][:4]))
+    else:
+        rows += ["", "Aucun changement visible sur les pages ouvertes."]
+    if unchanged:
+        rows += ["", "Ouvertes, rien de visible n'a changé : " + ", ".join(f"`{_neutralize(u['path'])}`" for u in unchanged)]
+    if preview.get("suggestions"):
+        rows += ["", "**À vérifier à la main** (suggestions de l'IA, peuvent être fausses ou incomplètes) :"]
+        for s in preview["suggestions"]:
+            rows.append(f"- [ ] {_neutralize(s['check'])}" + (f" (`{_neutralize(s['page'])}`)" if s.get("page") else ""))
+    if details_url and pages:
+        rows += ["", f"Captures avant / après : [voir dans l'interface]({details_url})"]
+    return rows
+
+
 def render_summary(
     verdict: str,
     findings: list[Finding],
@@ -247,6 +300,7 @@ def render_summary(
     pilot_mode: bool = True,
     details_url: str = "",
     checks: list[dict] | None = None,
+    preview: dict | None = None,
 ) -> str:
     counts = {s: sum(1 for f in findings if f.severity == s) for s in reversed(SEVERITIES)}
     meta = f"Commit analysé : `{head_sha[:7]}` · modèle : `{model}`"
@@ -272,6 +326,8 @@ def render_summary(
                         + (f" ({c['count']})" if c.get("count") else "")
                         + (f" — {_neutralize(c['message'])[:120]}" if c.get("message") else "")
                         + f" | {round((c.get('duration_ms') or 0) / 1000, 1)} s |")
+
+    rows += preview_rows(preview, details_url)
 
     summary_only = [f for f in findings if not f.inline] + [f for f in findings if f.inline][inline_count:]
     if summary_only:

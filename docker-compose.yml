@@ -8,6 +8,8 @@
 #  - checker: contrôles statiques (gitleaks, composer audit, PHPStan, PHP-CS-Fixer),
 #             isolé : réseau interne avec le worker seulement (+ sortie pour Composer),
 #             aucun secret, lecture seule, non root, limites CPU / mémoire / processus.
+#  - preview: aperçu avant / après (lance l'application du dépôt + Chromium), mêmes
+#             protections ; seulement pour les dépôts listés dans PREVIEW_REPOS.
 # L'interface de suivi est servie par l'api sous /ui (comptes : UI_USERS).
 services:
   api:
@@ -45,6 +47,8 @@ services:
         condition: service_started
       checker:
         condition: service_started
+      preview:
+        condition: service_started
     volumes:
       - audit:/data
     secrets:
@@ -68,6 +72,25 @@ services:
     mem_limit: 2g
     cpus: 2
     networks: [checks, checker-egress]
+    restart: unless-stopped
+
+  preview:
+    build:
+      context: .
+      dockerfile: preview/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,uid=10002
+      - /work:size=2g,uid=10002
+    shm_size: 512m
+    volumes:
+      - preview-cache:/cache
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 1024
+    mem_limit: 3g
+    cpus: 2
+    networks: [checks, preview-egress]
     restart: unless-stopped
 
   redis:
@@ -108,9 +131,13 @@ networks:
     internal: true
   # Sortie du checker (téléchargements Composer).
   checker-egress: {}
+  # Sortie du conteneur d'aperçu (téléchargements Composer). Le navigateur, lui,
+  # bloque toute requête qui ne vise pas l'application locale.
+  preview-egress: {}
 
 volumes:
   checker-cache:
+  preview-cache:
   audit:
   redis:
   pgdata:

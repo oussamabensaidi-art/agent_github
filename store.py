@@ -73,7 +73,15 @@ CREATE TABLE IF NOT EXISTS settings_history (
 CREATE TABLE IF NOT EXISTS deferred_checks (
   id BIGSERIAL PRIMARY KEY, payload JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS previews (
+  run_id TEXT NOT NULL REFERENCES runs(id) ON DELETE CASCADE,
+  idx INT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('before', 'after', 'diff')),
+  png BYTEA NOT NULL,
+  PRIMARY KEY (run_id, idx, kind)
+);
 """
+MAX_PREVIEW_BYTES = 8 * 1024 * 1024
 
 FINAL_STATUSES = ("ok", "stale", "superseded", "error")
 
@@ -110,6 +118,11 @@ class NullStore:
     async def take_deferred_checks(self) -> list[dict]:
         return []
 
+    # Captures de l'aperçu avant / après (PNG).
+    async def save_preview(self, run_id: str, idx: int, kind: str, png: bytes) -> None: ...
+    async def get_preview(self, run_id: str, idx: int, kind: str) -> bytes | None:
+        return None
+
 
 class MemoryStore(NullStore):
     """Pour les tests : garde tout en mémoire, avec le même masquage que Postgres."""
@@ -122,6 +135,13 @@ class MemoryStore(NullStore):
         self.events: list[dict] = []
         self.history: list[dict] = []
         self.deferred: list[dict] = []
+        self.previews: dict[tuple[str, int, str], bytes] = {}
+
+    async def save_preview(self, run_id: str, idx: int, kind: str, png: bytes) -> None:
+        self.previews[(run_id, idx, kind)] = png
+
+    async def get_preview(self, run_id: str, idx: int, kind: str) -> bytes | None:
+        return self.previews.get((run_id, idx, kind))
 
     async def defer_check(self, payload: dict) -> None:
         self.deferred.append(redact_obj(payload))
@@ -302,6 +322,25 @@ class PgStore(NullStore):
         from psycopg.types.json import Jsonb
         async with self.pool.connection() as conn:
             await conn.execute("INSERT INTO deferred_checks (payload) VALUES (%s)", (Jsonb(redact_obj(payload)),))
+
+    async def save_preview(self, run_id: str, idx: int, kind: str, png: bytes) -> None:
+        if len(png) > MAX_PREVIEW_BYTES:
+            log.warning("capture %s/%s/%s trop lourde (%d octets) : ignorée", run_id, idx, kind, len(png))
+            return
+        try:
+            async with self.pool.connection() as conn:
+                await conn.execute(
+                    "INSERT INTO previews (run_id, idx, kind, png) VALUES (%s, %s, %s, %s) "
+                    "ON CONFLICT (run_id, idx, kind) DO UPDATE SET png = EXCLUDED.png", (run_id, idx, kind, png))
+        except Exception as e:  # noqa: BLE001 — le suivi ne fait jamais échouer une revue
+            log.warning("capture non enregistrée : %s", e)
+
+    async def get_preview(self, run_id: str, idx: int, kind: str) -> bytes | None:
+        async with self.pool.connection() as conn:
+            cur = await conn.execute("SELECT png FROM previews WHERE run_id = %s AND idx = %s AND kind = %s",
+                                     (run_id, idx, kind))
+            row = await cur.fetchone()
+            return bytes(row["png"]) if row else None
 
     async def take_deferred_checks(self) -> list[dict]:
         """Retire et renvoie les clôtures en attente (atomique : un seul worker les obtient)."""

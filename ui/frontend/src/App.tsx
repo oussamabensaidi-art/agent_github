@@ -36,12 +36,10 @@ function PublishingSwitch({ config, user, onChange }: { config: AppConfig; user:
     <>
       <button type="button" className={`switch ${on ? "switch-on" : "switch-off"}`} disabled={!admin}
         onClick={() => setConfirm(true)}
-        title={admin ? "Interrupteur de publication" : "Réservé aux administrateurs"}>
+        title={`${admin ? "Interrupteur de publication" : "Réservé aux administrateurs"} — dernier changement : `
+          + (config.publishing.updated_by ? `${config.publishing.updated_by}, ${dateTime(config.publishing.updated_at)}` : "valeur initiale")}>
         <span className="switch-track"><span className="switch-thumb" /></span>
-        <span className="switch-text">
-          <strong>{on ? "Publication active" : "Publication coupée"}</strong>
-          <small>{config.publishing.updated_by ? `${config.publishing.updated_by} · ${dateTime(config.publishing.updated_at)}` : "valeur initiale"}</small>
-        </span>
+        <span className="switch-text"><strong>{on ? "Publication active" : "Publication coupée"}</strong></span>
       </button>
       {/* Portail : la barre du haut (backdrop-filter) piégerait un élément `fixed`. */}
       {confirm && createPortal(
@@ -117,9 +115,10 @@ export default function App() {
         </nav>
         <div className="topbar-right">
           <div className="chips">
-            {config.pilot_mode && <span className="chip" title="Les remarques de l'IA ne peuvent pas bloquer seules">Pilote · IA consultative</span>}
             {config.workers.length
-              ? <span className="chip chip-mono" title={`${config.workers.length} worker(s) actif(s) · fournisseur ${config.provider}`}>{config.model}</span>
+              ? <span className="chip" title={`Modèle ${config.model} · ${config.workers.length} worker(s) actif(s)`
+                + (config.pilot_mode ? " · mode pilote : les remarques de l'IA ne peuvent pas bloquer seules" : "")}>
+                  <span className="chip-dot" /> Agent actif{config.pilot_mode ? " · pilote" : ""}</span>
               : <span className="chip chip-alert" title="Aucun battement de cœur depuis 60 s">aucun worker actif</span>}
           </div>
           <PublishingSwitch config={config} user={user} onChange={loadConfig} />

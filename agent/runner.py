@@ -15,6 +15,7 @@ from agent.github import GitHubAppAuth, GitHubClient
 from agent.graph import review_graph
 from agent.llm import OllamaClient, OpenRouterClient, Qwen3ApiClient
 from agent.notify import Mailer
+from agent.preview import PreviewClient
 from agent.nodes import run_status
 from agent.prompts import load_rules
 from agent.review import rules_version
@@ -71,6 +72,8 @@ def build_services(settings, github, store=None) -> Services:
         skills=load_skills(settings.SKILLS_DIR),
         checker=(CheckerClient(settings.CHECKER_URL, settings.CHECKER_TIMEOUT_SECONDS)
                  if settings.CHECKS_ENABLED and settings.CHECKER_URL else None),
+        previewer=(PreviewClient(settings.PREVIEW_URL, settings.PREVIEW_TIMEOUT_SECONDS)
+                   if settings.PREVIEW_ENABLED and settings.PREVIEW_URL else None),
     )
 
 

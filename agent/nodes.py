@@ -21,6 +21,7 @@ from agent.checks import changed_map, evaluate_ci, tool_findings, tool_incomplet
 from agent.diff import FileDiff, build_chunks, excerpt, file_from_github, filter_files, is_incomplete_reason
 from agent.events import emit
 from agent.notify import build_alert
+from agent import preview as preview_mod
 from agent.review import (
     CHECK_CONCLUSION, MARKER, OUTCOME_FAILED, OUTCOME_SUPERSEDED, STATUS_STATE, SUPERSEDED_MARK,
     VERDICT_BLOCKING, VERDICT_TEXT, superseded_body,
@@ -103,6 +104,7 @@ async def fetch_pr(state: ReviewState, config) -> dict:
         "pr_author": (pr.get("user") or {}).get("login", ""),
         "pr_url": pr.get("html_url", ""),
         "base_ref": (pr.get("base") or {}).get("ref", ""),
+        "base_sha": (pr.get("base") or {}).get("sha", ""),
         "check_id": check_id,
     }
 
@@ -326,6 +328,75 @@ async def static_checks(state: ReviewState, config) -> dict:
 
 
 @node()
+async def ui_preview(state: ReviewState, config) -> dict:
+    """Aperçu avant / après des pages touchées par la PR, en parallèle de la revue IA.
+
+    Information pour le relecteur : ne change jamais le verdict, ne lève jamais d'erreur."""
+    s = svc(config)
+    if s.previewer is None or not preview_mod.allowed(s.settings, state["repo"]):
+        return {"preview": {"status": "off", "message": "", "pages": []}}
+    t0 = time.perf_counter()
+    changed = changed_map(state["files"], state.get("skipped", []))
+
+    def done(status: str, message: str, pages: list | None = None, **extra) -> dict:
+        ms = round((time.perf_counter() - t0) * 1000)
+        emit("preview_finished", status=status, message=message, count=len(pages or []), duration_ms=ms, **extra)
+        return {"preview": {"status": status, "message": message, "pages": pages or [], "duration_ms": ms, **extra}}
+
+    try:
+        # Configuration : branche de base ACTUELLE (comme les règles du dépôt) ; base.sha
+        # date de l'ouverture de la PR et ne verrait pas une configuration ajoutée depuis.
+        raw = await s.github.get_file(state["repo"], s.settings.PREVIEW_CONFIG_PATH,
+                                      state.get("base_ref") or state.get("base_sha"))
+        cfg = preview_mod.parse_config(raw)
+        if cfg is None:
+            return done("skipped", f"pas de {s.settings.PREVIEW_CONFIG_PATH} lisible sur la branche de base")
+        ui = preview_mod.ui_changed(changed, cfg)
+        if not ui:
+            return done("skipped", "aucun fichier d'interface modifié")
+        emit("preview_started", files=ui[:20])
+        limit = s.settings.CHECK_MAX_ARCHIVE_MB * 1024 * 1024
+        base, head = await asyncio.gather(
+            s.github.download_tarball(state["repo"], state.get("base_sha") or state["base_ref"], limit),
+            s.github.download_tarball(state["repo"], state["head_sha"], limit))
+        result = await s.previewer.preview(base, head, changed, cfg)
+    except Exception as e:  # noqa: BLE001 — aperçu indisponible : signalé, jamais bloquant
+        log.warning("aperçu avant / après indisponible : %s", e)
+        return done("error", redact_text(f"{type(e).__name__}: {e}")[0][:300])
+
+    pages = []
+    events = s.events
+    for idx, page in enumerate(result.get("pages") or []):
+        meta, images = preview_mod.split_page(page)
+        meta["idx"] = idx
+        if events is not None and hasattr(events, "save_preview"):
+            for kind, png in images.items():
+                await events.save_preview(state["run_id"], idx, kind, png)
+        emit("preview_page", **meta)
+        pages.append(meta)
+    unchanged = [{"path": str(u.get("path", ""))[:300], "reason": redact_text(str(u.get("reason", "")))[0][:300]}
+                 for u in (result.get("unchanged") or [])][:10]
+    suggestions, suggest_error = [], ""
+    if pages and s.settings.PREVIEW_AI_SUGGESTIONS:
+        emit("preview_suggesting")
+        ui_files = [f for f in state["files"] if f.path in set(ui)]
+        prompt = preview_mod.suggestion_prompt(pages, ui_files)
+        for attempt in (1, 2):   # une réponse mal formée est retentée une fois, comme la revue
+            try:
+                raw_items = await asyncio.wait_for(s.llm.review(preview_mod.SUGGEST_SYSTEM, prompt),
+                                                   s.settings.PREVIEW_AI_TIMEOUT_SECONDS)
+                suggestions = preview_mod.parse_suggestions(raw_items, {p["path"] for p in pages})
+                suggest_error = ""
+                break
+            except Exception as e:  # noqa: BLE001 — sans suggestions, l'aperçu reste utile
+                log.warning("suggestions de vérification indisponibles (essai %d) : %s", attempt, e)
+                suggest_error = "suggestions de l'IA indisponibles"
+    status = result.get("status") or "error"
+    return done(status, redact_text(str(result.get("message") or ""))[0][:300], pages,
+                unchanged=unchanged, suggestions=suggestions, suggest_error=suggest_error)
+
+
+@node()
 async def decide(state: ReviewState, config) -> dict:
     s = svc(config)
     if state.get("error"):
@@ -344,8 +415,8 @@ async def decide(state: ReviewState, config) -> dict:
     inline_count = min(sum(1 for f in findings if f.inline), s.settings.MAX_INLINE_COMMENTS)
     summary = render_summary(verdict, findings, inline_count, state.get("skipped", []),
                              incomplete, s.llm.model, state["head_sha"], s.rules_version, pilot,
-                             details_url(s, state), state.get("checks"))
-    counts = {sev: sum(1 for f in findings if f.severity == sev) for sev in ("critical", "major", "minor", "info")}
+                             details_url(s, state), state.get("checks"), state.get("preview"))
+    counts ={sev: sum(1 for f in findings if f.severity == sev) for sev in ("critical", "major", "minor", "info")}
     emit("verdict", verdict=verdict, counts=counts, incomplete_reasons=incomplete,
          rules_version=s.rules_version, pilot_mode=pilot)
     return {"findings": findings, "verdict": verdict, "summary": summary, "inline_count": inline_count,
@@ -384,7 +455,8 @@ async def publish(state: ReviewState, config) -> dict:
     ]
     fallback = render_summary(state["verdict"], findings, 0, state.get("skipped", []),
                               state.get("incomplete_reasons", []), s.llm.model, state["head_sha"],
-                              s.rules_version, pilot, details_url(s, state))
+                              s.rules_version, pilot, details_url(s, state), state.get("checks"),
+                              state.get("preview"))
     # Nouveau push sur la même PR : ne pas répéter les commentaires déjà posés et
     # encore valides, puis replier la synthèse des revues précédentes.
     old_reviews, reused = [], 0

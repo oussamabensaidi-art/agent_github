@@ -78,6 +78,7 @@ export const NODE_LABEL: Record<string, string> = {
   load_context: "Contexte",
   ai_review: "Revue IA",
   static_checks: "Contrôles",
+  ui_preview: "Avant / après",
   decide: "Verdict",
   publish: "Publication",
   alert: "Alerte",
@@ -92,6 +93,7 @@ export const NODE_HINT: Record<string, string> = {
   load_context: "règles du dépôt, en-têtes",
   ai_review: "lots analysés en parallèle",
   static_checks: "outils + CI, en parallèle",
+  ui_preview: "captures des pages modifiées, en parallèle",
   decide: "règles déterministes versionnées",
   publish: "commit revérifié, revue COMMENT",
   alert: "email si bloquante",
@@ -115,8 +117,8 @@ export const SOURCE_LABEL: Record<string, string> = {
 };
 
 export const REVIEWER_LABEL: Record<string, string> = {
-  securite: "relecteur sécurité",
-  code: "relecteur code & Symfony",
+  securite: "IA sécurité",
+  code: "IA code & Symfony",
 };
 
 /** Sources déterministes (ne dépendent pas d'un modèle) : peuvent bloquer en mode pilote. */

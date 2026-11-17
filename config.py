@@ -93,6 +93,19 @@ class Settings(BaseSettings):
     CI_REQUIRED: bool = False        # true : pas de CI = analyse incomplète
     CI_CHECK_NAMES: str = ""         # vide = tous les checks sauf celui de l'agent
 
+    # --- Aperçu avant / après (nœud ui_preview, en parallèle de la revue IA) ---
+    # Conteneur « preview » isolé : lance l'application du dépôt sur la branche de base
+    # et sur la PR, photographie les pages touchées par les fichiers d'interface modifiés.
+    # Exécute le code de la PR : réservé aux dépôts listés (dépôts de test pour l'instant).
+    PREVIEW_ENABLED: bool = False
+    PREVIEW_URL: str = "http://preview:8091"
+    PREVIEW_TIMEOUT_SECONDS: float = 900
+    PREVIEW_REPOS: str = ""                           # "org/depot,org/autre" ; vide = aucun
+    PREVIEW_CONFIG_PATH: str = ".github/pr-preview.json"   # lu sur la branche de base
+    # Après les captures : le modèle propose quoi vérifier à la main (indicatif, peut se tromper).
+    PREVIEW_AI_SUGGESTIONS: bool = True
+    PREVIEW_AI_TIMEOUT_SECONDS: float = 600
+
     # --- Relecteurs spécialisés (compétences de skills/) ---
     # Liste ordonnée ; vide = un seul relecteur généraliste (comportement d'avant).
     REVIEWERS: str = "securite,code"
@@ -152,6 +165,10 @@ class Settings(BaseSettings):
     @property
     def reviewers(self) -> list[str]:
         return self._csv(self.REVIEWERS)
+
+    @property
+    def preview_repos(self) -> list[str]:
+        return [r.lower() for r in self._csv(self.PREVIEW_REPOS)]
 
     @property
     def ci_check_names(self) -> list[str]:

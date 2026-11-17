@@ -164,6 +164,16 @@ async def run_events(run_id: str, request: Request, user=Depends(current_user)):
     return await store_of(request).events(run_id)
 
 
+@api.get("/runs/{run_id}/previews/{idx}/{kind}.png")
+async def run_preview_image(run_id: str, idx: int, kind: Literal["before", "after", "diff"], request: Request,
+                            user=Depends(current_user)):
+    png = await store_of(request).get_preview(run_id, idx, kind)
+    if png is None:
+        raise HTTPException(404, "capture inconnue")
+    return Response(png, media_type="image/png",
+                    headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"})
+
+
 @api.get("/runs/{run_id}/stream")
 async def run_stream(run_id: str, request: Request, last_event_id: str | None = Header(default=None),
                      user=Depends(current_user)):

@@ -121,7 +121,7 @@ export function LivePage({ config, user }: { config: AppConfig; user: User }) {
         {config.demo_mode && user.role === "admin" && (
           <DemoLauncher onLaunched={(ids) => { auto.current = true; if (ids[0]) setFollow(ids[0]); }} />
         )}
-        <Panel title="Analyses récentes" aside={<span className="muted">{active} en cours · {queued} en file</span>}>
+        <Panel title="Analyses" aside={<span className="muted">{active ? `${active} en cours` : "rien en cours"}{queued ? ` · ${queued} en file` : ""}</span>}>
           {runs.length === 0 && <p className="muted pad">Aucune analyse pour l’instant.</p>}
           <ul className="run-list">
             {runs.map((r) => (
@@ -134,7 +134,7 @@ export function LivePage({ config, user }: { config: AppConfig; user: User }) {
                       ? <span className={`pill pill-${r.status}`}>{STATUS_LABEL[r.status]}</span>
                       : r.verdict ? <VerdictBadge verdict={r.verdict} size="sm" /> : <span className="pill">{STATUS_LABEL[r.status]}</span>}
                   </span>
-                  <span className="run-item-title">{r.title || "…"}</span>
+                  <span className="run-item-title">{r.title || (r.status === "queued" ? "En attente de son tour" : "Lecture de la PR…")}</span>
                   <span className="run-item-meta">{relative(r.queued_at)}{r.total_ms ? ` · ${duration(r.total_ms)}` : ""}{r.demo ? " · démo" : ""}</span>
                 </button>
               </li>

@@ -31,6 +31,9 @@ services:
       SMTP_USER: ""
       ALERT_EMAILS: lead-dev@calipso.test
       UI_PUBLIC_URL: http://localhost:8020/ui
+      # Aperçu avant / après : lance le code de la PR, donc dépôts de TEST seulement.
+      PREVIEW_ENABLED: "true"
+      PREVIEW_REPOS: test-agent-revue/project_test_1,test-agent-revue/project_test_2,test-agent-revue/project_test_3
     depends_on: [mailpit]
 
   api:

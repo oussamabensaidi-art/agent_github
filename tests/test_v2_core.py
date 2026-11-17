@@ -270,7 +270,7 @@ async def test_event_stream_covers_the_run_and_never_stores_a_secret(tmp_path):
     assert [e["seq"] for e in events.events] == list(range(len(events.events)))
     started = {e["data"]["node"] for e in events.events if e["type"] == "node_started"}
     finished = [e["data"] for e in events.events if e["type"] == "node_finished"]
-    assert started == {"fetch_pr", "load_diff", "scan_secrets", "load_context", "ai_review", "static_checks", "decide", "publish", "alert", "audit"}
+    assert started == {"fetch_pr", "load_diff", "scan_secrets", "load_context", "ai_review", "static_checks", "ui_preview", "decide", "publish", "alert", "audit"}
     assert all(isinstance(d["duration_ms"], int) for d in finished)
     for t in ("diff_loaded", "chunks_planned", "chunk_started", "chunk_finished", "finding",
               "findings_validated", "verdict", "published"):

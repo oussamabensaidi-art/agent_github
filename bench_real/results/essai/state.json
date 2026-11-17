@@ -1,0 +1,80 @@
+{
+  "tag": "essai",
+  "cases": {
+    "D2-acces-suppression": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/essai/D2-acces-suppression",
+      "sha": "59ea2daade9161be4409c2e5ed6682f881610fea",
+      "pr": 63,
+      "opened_at": 1794839476.4561362,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/63"
+    },
+    "D4-secret-en-dur": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/essai/D4-secret-en-dur",
+      "sha": "c49c3e680b0a7273f63f801826719f2f5d382a4f",
+      "pr": 58,
+      "opened_at": 1794839476.767692,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/58"
+    },
+    "D5-montant-flottant": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/essai/D5-montant-flottant",
+      "sha": "be2653712765a0c4c0ad335ca198efb6ffd94cd1",
+      "pr": 52,
+      "opened_at": 1794839476.708807,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/52"
+    },
+    "C2-liste-pluriel": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/essai/C2-liste-pluriel",
+      "sha": "6ffa8ceca9be445ff75c1f8723aef89b27e594d0",
+      "pr": 53,
+      "opened_at": 1794839476.6780105,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/53"
+    },
+    "C3-filtre-twig-money": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/essai/C3-filtre-twig-money",
+      "sha": "50fe43a90ea90c19d281e88e36abb5f834bd921e",
+      "pr": 64,
+      "opened_at": 1794839476.5511115,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/64"
+    },
+    "S1-phpstan-methode": {
+      "repo": "test-agent-revue/project_test_1",
+      "branch": "bench/essai/S1-phpstan-methode",
+      "sha": "0997d244fe5946c7eee693c217143ad8f85c788a",
+      "pr": 65,
+      "opened_at": 1794839476.6345136,
+      "url": "https://github.com/test-agent-revue/project_test_1/pull/65"
+    },
+    "S2-ci-en-echec": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/essai/S2-ci-en-echec",
+      "sha": "9a99696223d58313b2e37c53cd4b4f452ef3f5e5",
+      "pr": 59,
+      "opened_at": 1794839476.9873269,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/59"
+    },
+    "S3-dependance-vulnerable": {
+      "repo": "test-agent-revue/project_test_3",
+      "branch": "bench/essai/S3-dependance-vulnerable",
+      "sha": "7dc9fb69308d70e0228688199713eec02fd5b34e",
+      "pr": 51,
+      "opened_at": 1794839476.5657501,
+      "url": "https://github.com/test-agent-revue/project_test_3/pull/51"
+    },
+    "K2-couleur-css": {
+      "repo": "test-agent-revue/project_test_2",
+      "branch": "bench/essai/K2-couleur-css",
+      "sha": "dca6b21562fb3ec7564a5009294277eb5ae0ab42",
+      "pr": 57,
+      "opened_at": 1794839476.8229473,
+      "url": "https://github.com/test-agent-revue/project_test_2/pull/57"
+    }
+  },
+  "launched_at": 1794839473.0596602,
+  "launch_spread_s": 3.9,
+  "workers": 3
+}

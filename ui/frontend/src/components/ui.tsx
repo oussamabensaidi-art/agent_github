@@ -4,6 +4,8 @@ import type { Severity, Verdict } from "../types";
 
 const PATHS: Record<string, string> = {
   check: "M4 10.5l4 4L16 6",
+  minus: "M5 10h10",
+  plus: "M10 5v10M5 10h10",
   x: "M5 5l10 10M15 5L5 15",
   alert: "M10 3l8 14H2L10 3zM10 8v4M10 14.5v.5",
   info: "M10 18a8 8 0 100-16 8 8 0 000 16zM10 9v5M10 6v.5",

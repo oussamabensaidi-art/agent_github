@@ -46,6 +46,9 @@ class ReviewState(TypedDict, total=False):
     static_findings: list[Finding]
     static_incomplete: list[str]
     checks: list[dict]
+    # Aperçu avant / après (branche parallèle, information seulement)
+    base_sha: str
+    preview: dict                 # {"status", "message", "pages": [méta sans image]}
 
     # Résultat
     verdict: str
@@ -71,4 +74,5 @@ class Services:
     controls: Any = None   # .publishing_enabled() -> bool (interrupteur, lu à chaque écriture)
     events: Any = None     # journal d'événements (store.EventSink)
     checker: Any = None    # agent.checks.CheckerClient (None : contrôles statiques désactivés)
+    previewer: Any = None  # agent.preview.PreviewClient (None : aperçu avant / après désactivé)
     skills: Any = None     # list[agent.skills.Skill] (None : chargées depuis SKILLS_DIR)

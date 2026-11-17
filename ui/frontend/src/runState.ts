@@ -5,7 +5,7 @@ import type { ExcerptLine, Finding, RunEvent, Severity, Verdict } from "./types"
 // Vue d'une analyse reconstruite événement par événement : la même pour le direct et la relecture.
 
 export type NodeStatus = "idle" | "running" | "ok" | "error" | "stale" | "skipped";
-export const PIPELINE = ["fetch_pr", "load_diff", "scan_secrets", "load_context", "ai_review", "static_checks", "decide", "publish", "alert", "audit"];
+export const PIPELINE = ["fetch_pr", "load_diff", "scan_secrets", "load_context", "ai_review", "static_checks", "ui_preview", "decide", "publish", "alert", "audit"];
 
 export interface NodeView { status: NodeStatus; started?: number; finished?: number; duration?: number }
 export interface ChunkView {
@@ -29,6 +29,31 @@ export interface CheckView {
   count?: number;
   message?: string;
   runs?: { name: string; status: string; conclusion: string | null; url: string }[];
+}
+export interface PreviewSide { status: number | null; final_path: string; error: string; image: boolean }
+export interface PreviewPage {
+  idx: number;
+  path: string;
+  route: string;
+  reason: string;
+  diff_pct: number | null;
+  before: PreviewSide;
+  after: PreviewSide;
+  images: string[];
+  change?: { kind: string; summary: string; text_added: string[]; text_removed: string[]; zones: number; where: string[] };
+}
+export interface PreviewSuggestion { page: string; check: string; why: string }
+/** Aperçu avant / après. status : running | ok | skipped | error (absent : non concerné). */
+export interface PreviewView {
+  status: string;
+  message?: string;
+  files?: string[];
+  pages: PreviewPage[];
+  durationMs?: number;
+  unchanged?: { path: string; reason: string }[];
+  suggestions?: PreviewSuggestion[];
+  suggesting?: boolean;
+  suggestError?: string;
 }
 export interface FindingView extends Finding {
   state: "raw" | "kept" | "dropped";
@@ -59,6 +84,7 @@ export interface RunView {
   failNode?: string;
   chunks: ChunkView[];
   checks: CheckView[];
+  preview?: PreviewView;
   findings: FindingView[];
   files: { path: string; status: string; additions: number; deletions: number }[];
   skipped: { path: string; reason: string; incomplete: boolean }[];
@@ -143,6 +169,22 @@ export function applyEvent(v: RunView, ev: RunEvent): RunView {
       const exists = n.checks.some((c) => c.name === name);
       return { ...n, checks: exists ? n.checks.map((c) => (c.name === name ? { ...c, ...next } : c)) : [...n.checks, next] };
     }
+    case "preview_started":
+      return { ...n, preview: { status: "running", files: d.files || [], pages: [] } };
+    case "preview_page": {
+      const pages = (n.preview?.pages || []).filter((p) => p.idx !== d.idx);
+      return { ...n, preview: { status: "running", ...n.preview, pages: [...pages, d as PreviewPage].sort((a, b) => a.idx - b.idx) } };
+    }
+    case "preview_suggesting":
+      return { ...n, preview: { status: "running", pages: [], ...n.preview, suggesting: true } };
+    case "preview_finished":
+      return {
+        ...n,
+        preview: {
+          pages: [], ...n.preview, status: d.status, message: d.message, durationMs: d.duration_ms,
+          unchanged: d.unchanged || [], suggestions: d.suggestions || [], suggestError: d.suggest_error || "", suggesting: false,
+        },
+      };
     case "finding":
       if (n.findings.some((f) => f.id === d.id)) return n;
       return {
