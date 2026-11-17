@@ -1,0 +1,22 @@
+# Mode GitHub App pour le test sur l'organisation calipso-revue-test (DEV LOCAL UNIQUEMENT).
+# App de test : permissions Contents:read, Metadata:read, Pull requests:write, Checks:write ;
+# événement pull_request ; installée sur tous les dépôts de l'organisation.
+# À empiler APRÈS docker-compose.todo.yml :
+#   docker compose -f docker-compose.yml -f docker-compose.override.yml \
+#     -f docker-compose.todo.yml -f docker-compose.todo-app.yml up -d
+#
+# Dans .env : GITHUB_APP_ID. Clé privée de l'App : secrets/github_app.pem (gitignoré, jamais commitée).
+# Le webhook vient de l'App (il contient installation.id) : le webhook du dépôt doit être désactivé.
+# Avec l'App, l'agent publie un vrai check run « calipso-pr-review » et lit la CI (checks:read).
+services:
+  api:
+    environment:
+      GITHUB_AUTH_MODE: app
+
+  worker:
+    environment:
+      GITHUB_AUTH_MODE: app
+
+secrets:
+  github_app.pem:
+    file: ./secrets/github_app.pem
