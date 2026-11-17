@@ -172,7 +172,8 @@ class Qwen3ApiClient:
 
     def __init__(self, base_url: str, endpoint: str, api_key: str, allowed_hosts: list[str],
                  timeout: float = 600.0, max_tokens: int = 6144, max_thinking_tokens: int = 3072,
-                 transport: httpx.AsyncBaseTransport | None = None, context_tokens: int = 8192):
+                 transport: httpx.AsyncBaseTransport | None = None, context_tokens: int = 8192,
+                 model_name: str = "", enable_thinking: bool | None = None):
         if endpoint not in ("chat", "think"):
             raise ValueError("QWEN3_ENDPOINT doit valoir 'chat' ou 'think'")
         if not api_key:
@@ -187,6 +188,8 @@ class Qwen3ApiClient:
         self.max_thinking_tokens = max_thinking_tokens
         self.context_tokens = context_tokens
         self._transport = transport
+        self.model_name = model_name
+        self.enable_thinking = enable_thinking
 
     @staticmethod
     def schema_instruction() -> str:
@@ -219,10 +222,14 @@ class Qwen3ApiClient:
             ],
             "temperature": 0.1,
         }
+        if self.model_name:
+            payload["model"] = self.model_name
+        if self.enable_thinking is not None:
+            payload["chat_template_kwargs"] = {"enable_thinking": self.enable_thinking}
         async with httpx.AsyncClient(timeout=self.timeout, transport=self._transport) as client:
             while True:
                 payload["max_tokens"] = budget
-                if self.endpoint == "think":
+                if self.endpoint == "think" and self.enable_thinking is not False:
                     payload["max_thinking_tokens"] = min(self.max_thinking_tokens, budget // 2)
                 resp = await client.post(self.url, json=payload, headers={"x-api-key": self._key})
                 if self._context_overflow(resp) and budget // 2 >= self.MIN_OUTPUT_TOKENS:
