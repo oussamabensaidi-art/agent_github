@@ -9,6 +9,17 @@ import { PipelineGraph } from "./PipelineGraph";
 import { Timeline } from "./Timeline";
 import { Icon, Panel, VerdictBadge } from "./ui";
 
+/** Nettoyage des revues précédentes de l'agent (événements previous_reviews_*). */
+function cleanupText(view: RunView): string {
+  const c = view.cleanup;
+  if (c?.error) {
+    return `nettoyage incomplet (${c.reviews} revue(s), ${c.comments} commentaire(s) traités) : ${c.error}`;
+  }
+  if (c) return `${c.reviews} revue(s) précédente(s) remplacée(s), ${c.comments} commentaire(s) en ligne retiré(s)`;
+  if (view.published) return "aucune à nettoyer";
+  return "—";
+}
+
 function useNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now() / 1000);
   useEffect(() => {
@@ -224,6 +235,8 @@ export function RunMonitor({ view, live, connected, stored, canRate = false, rep
                 : view.superseded ? "non publiée (commit remplacé)"
                   : view.publishSkips.length ? "aucune écriture (interrupteur ou lecture seule)"
                     : running ? "en attente" : "—"}</dd>
+              <dt>Anciennes revues</dt>
+              <dd>{cleanupText(view)}</dd>
               <dt>Alerte email</dt>
               <dd>{view.alert === "sent" ? "envoyée" : view.verdict === "BLOQUANTE" ? (view.alert === "skipped" ? "non envoyée" : "—") : "non requise"}</dd>
               <dt>Fusion</dt>

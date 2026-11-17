@@ -64,6 +64,8 @@ export interface RunView {
   incompleteReasons: string[];
   publishSkips: { reason: string; step: string }[];
   published?: { inline: number; github_state: string; mode: string };
+  /** Nettoyage des revues précédentes de l'agent sur la PR (après publication). */
+  cleanup?: { reviews: number; comments: number; error?: string };
   superseded?: boolean;
   stale?: boolean;
   alert?: "sent" | "skipped";
@@ -162,6 +164,10 @@ export function applyEvent(v: RunView, ev: RunEvent): RunView {
       return { ...n, superseded: true };
     case "published":
       return { ...n, published: { inline: d.inline, github_state: d.github_state, mode: d.mode } };
+    case "previous_reviews_cleaned":
+      return { ...n, cleanup: { reviews: d.reviews, comments: d.comments } };
+    case "previous_reviews_cleanup_failed":
+      return { ...n, cleanup: { reviews: d.reviews ?? 0, comments: d.comments ?? 0, error: d.error } };
     case "alert_sent":
       return { ...n, alert: "sent" };
     case "alert_skipped":
